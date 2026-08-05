@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RutaUD · Empleabilidad · Universidad Distrital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mockups.css" />
+</head>
+<body>
+  <!-- Barra gov -->
+  <div class="topbar">
+    <span class="gov">GOV.CO</span>
+    <span class="topbar-right">Piloto de empleabilidad · Facultad de Ingeniería</span>
+  </div>
+
+  <!-- Header institucional -->
+  <header class="site-header">
+    <div class="brand">
+      <img src="logo-ud.png" alt="Escudo Universidad Distrital Francisco José de Caldas" class="logo" />
+      <div class="brand-text">
+        <strong>UNIVERSIDAD DISTRITAL</strong>
+        <span>FRANCISCO JOSÉ DE CALDAS</span>
+      </div>
+    </div>
+    <div class="product-tag">
+      <span class="product-name">RutaUD</span>
+      <span class="product-sub">Prácticas y primer empleo</span>
+    </div>
+  </header>
+
+  <nav class="main-nav" aria-label="Principal">
+    <button type="button" class="nav-link active" data-go="inicio">Inicio</button>
+    <span class="sep">/</span>
+    <button type="button" class="nav-link" data-go="hv">Mi hoja de vida</button>
+    <span class="sep">/</span>
+    <button type="button" class="nav-link" data-go="ofertas">Ofertas</button>
+  </nav>
+
+  <main>
+    <!-- INICIO -->
+    <section class="view active" id="view-inicio">
+      <div class="home-hero">
+        <div class="home-hero-inner home-hero-inner--center">
+          <div class="home-hero-copy">
+            <p class="home-badge">Universidad Distrital · Piloto de empleabilidad</p>
+            <p class="home-brand">RutaUD</p>
+            <h1>Tu práctica o primer empleo, con la universidad distrital</h1>
+            <div class="home-cta-row">
+              <button type="button" class="btn-main btn-lg" data-go="hv">Empezar mi hoja de vida</button>
+              <button type="button" class="btn-ghost-dark" data-go="ofertas">Ver búsqueda con IA</button>
+            </div>
+            <p class="home-micro" id="status-strip">
+              <span class="home-dot" id="status-dot"></span>
+              <span id="hv-status">Empieza por tu HV · tarda menos de 3 minutos</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-how">
+        <h2>Así de simple</h2>
+        <div class="how-row">
+          <button type="button" class="how-card" data-go="hv">
+            <span class="how-n">1</span>
+            <strong>Arma tu HV</strong>
+            <p>Paso a paso, en formato ATS. Ves el CV formarse en vivo.</p>
+          </button>
+          <button type="button" class="how-card" data-go="ofertas">
+            <span class="how-n">2</span>
+            <strong>La IA busca</strong>
+            <p>Revisa varios portales y te deja solo ofertas frescas.</p>
+          </button>
+          <button type="button" class="how-card" data-go="ofertas">
+            <span class="how-n">3</span>
+            <strong>Prepara y aplica</strong>
+            <p>Un CV adaptado a cada oferta, sin vender humo.</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOJA DE VIDA — constructor ATS dinámico -->
+    <section class="view" id="view-hv" hidden>
+      <div class="page page--wide">
+        <header class="page-head">
+          <h1>Arma tu hoja de vida ATS</h1>
+          <p>Vas llenando por partes. A la derecha ves tu CV formarse en vivo.</p>
+        </header>
+
+        <div class="ats-builder">
+          <div class="ats-steps" role="tablist" aria-label="Pasos del CV">
+            <button type="button" class="ats-step active" data-step="0">
+              <i>1</i><span>Tú</span>
+            </button>
+            <button type="button" class="ats-step" data-step="1">
+              <i>2</i><span>Estudios</span>
+            </button>
+            <button type="button" class="ats-step" data-step="2">
+              <i>3</i><span>Experiencia</span>
+            </button>
+            <button type="button" class="ats-step" data-step="3">
+              <i>4</i><span>Skills</span>
+            </button>
+          </div>
+
+          <div class="ats-grid">
+            <form class="ats-form" id="hv-form">
+              <!-- Paso 1: Tú -->
+              <div class="ats-panel active" data-panel="0">
+                <h2>¿Quién eres?</h2>
+                <p class="ats-help">Datos básicos que van arriba del CV.</p>
+                <label class="field">
+                  <span>Nombre completo</span>
+                  <input type="text" name="nombre" value="Camila Rodríguez" data-live />
+                </label>
+                <label class="field">
+                  <span>Correo o celular</span>
+                  <input type="text" name="contacto" value="camila@correo.com · 300 123 4567" data-live />
+                </label>
+                <label class="field">
+                  <span>Ciudad</span>
+                  <input type="text" name="ciudad" value="Bogotá" data-live />
+                </label>
+                <label class="field">
+                  <span>¿Qué buscas?</span>
+                  <div class="choice-row" role="group">
+                    <label class="choice">
+                      <input type="radio" name="busca" value="Práctica profesional" checked data-live />
+                      <span>Práctica</span>
+                    </label>
+                    <label class="choice">
+                      <input type="radio" name="busca" value="Primer empleo" data-live />
+                      <span>Primer empleo</span>
+                    </label>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Paso 2: Estudios -->
+              <div class="ats-panel" data-panel="1" hidden>
+                <h2>Estudios</h2>
+                <p class="ats-help">Formato ATS: universidad, carrera y semestre.</p>
+                <label class="field">
+                  <span>Universidad</span>
+                  <input type="text" name="universidad" value="Universidad Distrital Francisco José de Caldas" data-live />
+                </label>
+                <label class="field">
+                  <span>Carrera</span>
+                  <select name="carrera" data-live>
+                    <option selected>Ingeniería de Sistemas</option>
+                    <option>Ingeniería Electrónica</option>
+                    <option>Ingeniería Industrial</option>
+                    <option>Otra carrera UD</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Semestre</span>
+                  <select name="semestre" data-live>
+                    <option>5º semestre</option>
+                    <option>6º semestre</option>
+                    <option selected>7º semestre</option>
+                    <option>8º semestre</option>
+                    <option>9º semestre</option>
+                    <option>10º semestre</option>
+                  </select>
+                </label>
+              </div>
+
+              <!-- Paso 3: Experiencia -->
+              <div class="ats-panel" data-panel="2" hidden>
+                <h2>Experiencia</h2>
+                <p class="ats-help">Escribe logros reales, uno por línea. No inventes.</p>
+                <label class="field">
+                  <span>Cargo</span>
+                  <input type="text" name="cargo" value="Developer" data-live />
+                </label>
+                <label class="field">
+                  <span>Empresa / proyecto</span>
+                  <input type="text" name="empresa" value="Empresa privada" data-live />
+                </label>
+                <label class="field">
+                  <span>Periodo</span>
+                  <input type="text" name="periodo" value="2023 – actualidad" data-live />
+                </label>
+                <label class="field">
+                  <span>Logros <em>(una línea = un bullet ATS)</em></span>
+                  <textarea name="logros" rows="5" data-live>Automatización de extracción de datos con Playwright
+Integración de APIs LLM para filtrar información
+Reportes Excel y flujos con Git</textarea>
+                </label>
+              </div>
+
+              <!-- Paso 4: Skills -->
+              <div class="ats-panel" data-panel="3" hidden>
+                <h2>Skills</h2>
+                <p class="ats-help">Escribe y Enter para agregar. Solo lo que de verdad manejas.</p>
+                <div class="skill-entry">
+                  <input type="text" id="skill-input" placeholder="Ej: Python, Excel, AutoCAD…" />
+                  <button type="button" class="btn-outline" id="skill-add">Agregar</button>
+                </div>
+                <div class="skill-chips" id="skill-chips"></div>
+                <input type="hidden" name="skills" id="skills-hidden" value="Python, SQL, Git, APIs REST, Playwright" />
+                <p class="hint">La IA usará estas skills para el match. Si no está aquí, no aparece en el CV.</p>
+              </div>
+
+              <div class="ats-nav">
+                <button type="button" class="btn-outline" id="ats-prev" hidden>Atrás</button>
+                <div class="ats-nav-right">
+                  <button type="button" class="btn-main" id="ats-next">Continuar</button>
+                  <button type="submit" class="btn-main" id="ats-finish" hidden>Guardar y buscar ofertas</button>
+                </div>
+              </div>
+            </form>
+
+            <aside class="ats-preview-wrap">
+              <div class="ats-preview-bar">
+                <span>Vista ATS</span>
+                <span class="ats-live-dot">En vivo</span>
+              </div>
+              <article class="ats-paper" id="ats-preview" aria-live="polite">
+                <h3 class="ats-name" id="pv-nombre">Camila Rodríguez</h3>
+                <p class="ats-line" id="pv-contacto">camila@correo.com · 300 123 4567</p>
+                <p class="ats-line" id="pv-ciudad">Bogotá · Busca: <span id="pv-busca">Práctica profesional</span></p>
+
+                <h4>EDUCACIÓN</h4>
+                <p class="ats-strong" id="pv-carrera">Ingeniería de Sistemas — 7º semestre</p>
+                <p class="ats-line" id="pv-uni">Universidad Distrital Francisco José de Caldas</p>
+
+                <h4>EXPERIENCIA</h4>
+                <p class="ats-strong"><span id="pv-cargo">Developer</span> — <span id="pv-empresa">Empresa privada</span></p>
+                <p class="ats-line" id="pv-periodo">2023 – actualidad</p>
+                <ul class="ats-bullets" id="pv-logros">
+                  <li>Automatización de extracción de datos con Playwright</li>
+                  <li>Integración de APIs LLM para filtrar información</li>
+                  <li>Reportes Excel y flujos con Git</li>
+                </ul>
+
+                <h4>SKILLS</h4>
+                <p class="ats-line" id="pv-skills">Python · SQL · Git · APIs REST · Playwright</p>
+              </article>
+              <p class="ats-preview-note">Formato limpio para ATS: sin columnas, sin iconos, fácil de leer por sistemas.</p>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OFERTAS -->
+    <section class="view" id="view-ofertas" hidden>
+      <div class="page page--wide">
+        <div class="search-hero" id="radar">
+          <div class="search-hero-copy">
+            <p class="radar-kicker">Radar de IA</p>
+            <h1>Ofertas frescas de varios portales</h1>
+            <p class="radar-sub" id="radar-sub">
+              Computrabajo · Elempleo · Indeed · LinkedIn — solo lo reciente que encaja con tu HV.
+            </p>
+            <p class="search-live" id="search-live" hidden></p>
+          </div>
+          <div class="search-hero-actions">
+            <button type="button" class="btn-main btn-radar" id="btn-buscar">Buscar ahora</button>
+            <button type="button" class="btn-outline btn-light" data-go="hv">Editar mi HV</button>
+          </div>
+        </div>
+
+        <div class="offers-meta" id="results-head" hidden>
+          <p><strong id="offers-count">6 ofertas</strong> con buen encaje · últimas 72 horas</p>
+        </div>
+
+        <div class="offer-grid" id="offers-list" hidden>
+          <article class="ocard">
+            <div class="ocard-top">
+              <span class="src src--ct">Computrabajo</span>
+              <span class="fresh">Hace 4 h</span>
+            </div>
+            <h2>Practicante Backend Python</h2>
+            <p class="ocard-co">NexPay Fintech · Bogotá · Presencial</p>
+            <p class="ocard-desc">Apoyo en APIs REST, automatización de pruebas y despliegues internos. Buscan estudiante de 6º en adelante con Python y Git.</p>
+            <div class="ocard-foot">
+              <span class="match match--high">86% encaje</span>
+              <button type="button" class="btn-main btn-sm" data-offer="python">Preparar CV</button>
+            </div>
+          </article>
+
+          <article class="ocard">
+            <div class="ocard-top">
+              <span class="src src--el">Elempleo</span>
+              <span class="fresh">Hace 9 h</span>
+            </div>
+            <h2>Práctica QA Automation</h2>
+            <p class="ocard-co">Andina Contact · Bogotá · Híbrido</p>
+            <p class="ocard-desc">Diseñar casos de prueba y automatizar flujos con Playwright/Selenium. Ideal si ya tienes experiencia en scripts y rigor.</p>
+            <div class="ocard-foot">
+              <span class="match match--high">82% encaje</span>
+              <button type="button" class="btn-main btn-sm" data-offer="qa">Preparar CV</button>
+            </div>
+          </article>
+
+          <article class="ocard">
+            <div class="ocard-top">
+              <span class="src src--li">LinkedIn</span>
+              <span class="fresh">Hace 14 h</span>
+            </div>
+            <h2>Desarrollador Junior</h2>
+            <p class="ocard-co">ByteLab SAS · Bogotá · Híbrido</p>
+            <p class="ocard-desc">Equipo pequeño buscando junior para backends y automatizaciones. Valoran proyectos reales más que título terminado.</p>
+            <div class="ocard-foot">
+              <span class="match match--mid">74% encaje</span>
+              <button type="button" class="btn-main btn-sm" data-offer="junior">Preparar CV</button>
+            </div>
+          </article>
+
+          <article class="ocard">
+            <div class="ocard-top">
+              <span class="src src--in">Indeed</span>
+              <span class="fresh">Hace 1 día</span>
+            </div>
+            <h2>Practicante de Datos</h2>
+            <p class="ocard-co">Retail Analytics · Remoto parcial</p>
+            <p class="ocard-desc">Limpieza de datos, SQL básico y reportes. Encaja si manejas Excel/SQL; Python es un plus, no requisito duro.</p>
+            <div class="ocard-foot">
+              <span class="match match--mid">69% encaje</span>
+              <button type="button" class="btn-main btn-sm" data-offer="datos">Preparar CV</button>
+            </div>
+          </article>
+
+          <article class="ocard">
+            <div class="ocard-top">
+              <span class="src src--ct">Computrabajo</span>
+              <span class="fresh">Hace 1 día</span>
+            </div>
+            <h2>Soporte técnico / DevOps Jr</h2>
+            <p class="ocard-co">Cloud Norte · Bogotá · Presencial</p>
+            <p class="ocard-desc">Monitoreo, scripts y apoyo a despliegues. Piden Linux básico; si no lo tienes, el match baja y no lo inventamos en el CV.</p>
+            <div class="ocard-foot">
+              <span class="match match--mid">63% encaje</span>
+              <button type="button" class="btn-main btn-sm" data-offer="devops">Preparar CV</button>
+            </div>
+          </article>
+
+          <article class="ocard ocard--soft">
+            <div class="ocard-top">
+              <span class="src src--el">Elempleo</span>
+              <span class="fresh">Hace 2 días</span>
+            </div>
+            <h2>Analista funcional Jr</h2>
+            <p class="ocard-co">Consultora Ágil · Bogotá</p>
+            <p class="ocard-desc">Levantamiento de requisitos y documentación. Poco alineado a tu perfil técnico actual; la IA lo marca como opcional.</p>
+            <div class="ocard-foot">
+              <span class="match match--low">48% encaje</span>
+              <button type="button" class="btn-ghost btn-sm" disabled>Poco recomendada</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREPARAR CV — una pantalla clara -->
+    <section class="view" id="view-cv" hidden>
+      <div class="page page--narrow">
+        <header class="page-head">
+          <button type="button" class="back" data-go="ofertas">← Volver a ofertas</button>
+          <h1 id="cv-title">CV listo para aplicar</h1>
+          <p>Adaptado a la oferta · solo con lo que pusiste en tu HV</p>
+        </header>
+
+        <div class="cv-box">
+          <div class="cv-ok">✓ Sin inventos · listo para enviar</div>
+          <article class="cv-preview" id="cv-preview">
+            <h2>Camila Rodríguez</h2>
+            <p class="cv-meta">Ing. de Sistemas · 7º semestre · Universidad Distrital</p>
+            <p id="cv-body">
+              Desarrolladora con experiencia en Python, SQL, Git y automatización.
+              Busco práctica backend alineada a APIs y calidad de entrega.
+            </p>
+            <p class="cv-gap" id="cv-gap"><strong>Ojo:</strong> la oferta pide Docker y no está en tu HV — no lo incluimos.</p>
+          </article>
+        </div>
+
+        <div class="cv-actions">
+          <button type="button" class="btn-outline" id="btn-copy">Copiar texto</button>
+          <button type="button" class="btn-main" id="btn-done">Listo, volver a ofertas</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <img src="logo-ud.png" alt="" class="footer-logo" />
+    <p>Propuesta de piloto · RutaUD · Universidad Distrital Francisco José de Caldas</p>
+  </footer>
+
+  <div class="toast" id="toast" hidden>Guardado</div>
+  <script src="mockups.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+---
+description: Convenciones Bolsa de Empleo UD — capas + MVC + scrapers
+alwaysApply: true
+---
+
+# Bolsa de Empleo Universidad Distrital
+
+- Nombre: **Bolsa de Empleo UD** / **RutaUD**. Nunca scrapperfacebook / siochat como nombre de producto.
+- Arquitectura: **capas + MVC**
+  - Controllers → `app/presentation/controllers/`
+  - Services → `app/application/services/`
+  - Models/Schemas → `app/domain/`
+  - Infra (IA, DB, scrapers) → `app/infrastructure/`
+- **No borrar** `infrastructure/scraping/legacy/` — ahí está flores.py recuperado (lógica Playwright base).
+- Nuevos scrapers de empleo van en `infrastructure/scraping/portals/` usando `browser/` helpers.
+- MVP: UD · Ingeniería de Sistemas · Bogotá · ofertas &lt;24h · priorizar híbrido.
+- DeepSeek solo adapta HV con skills reales; no inventar experiencia.

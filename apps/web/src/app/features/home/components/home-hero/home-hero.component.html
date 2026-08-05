@@ -1,0 +1,17 @@
+<div class="home-hero">
+  <div class="home-hero-inner home-hero-inner--center">
+    <div class="home-hero-copy">
+      <p class="home-badge">Universidad Distrital · Piloto de empleabilidad</p>
+      <p class="home-brand">RutaUD</p>
+      <h1>Tu práctica o primer empleo, con la universidad distrital</h1>
+      <div class="home-cta-row">
+        <a routerLink="/hoja-de-vida" class="btn-main btn-lg">Empezar mi hoja de vida</a>
+        <a routerLink="/ofertas" class="btn-ghost-dark">Ver búsqueda con IA</a>
+      </div>
+      <p class="home-micro" [class.ready]="hv.saved()">
+        <span class="home-dot"></span>
+        <span>{{ hv.statusLabel() }}</span>
+      </p>
+    </div>
+  </div>
+</div>

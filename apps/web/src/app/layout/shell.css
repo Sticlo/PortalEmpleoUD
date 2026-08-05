@@ -1,0 +1,22 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+a.btn-main,
+a.btn-ghost-dark,
+a.btn-outline,
+a.how-card,
+a.back {
+  text-decoration: none;
+  display: inline-block;
+}
+
+a.how-card {
+  display: block;
+  color: inherit;
+}
+
+a.btn-light {
+  text-align: center;
+}

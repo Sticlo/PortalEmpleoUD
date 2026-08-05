@@ -1,0 +1,48 @@
+<div class="offers-hero" [class.is-loading]="scanning()">
+  <div class="offers-hero-inner">
+    <p class="offers-eyebrow">RutaUD · Ofertas</p>
+    <h1>Ofertas de las últimas 24 horas</h1>
+    <p class="offers-lead">{{ subtitle() }}</p>
+
+    <div class="offers-search">
+      <label class="sr-only" for="offers-query">Palabra clave</label>
+      <div class="offers-search-field" [class.is-loading]="scanning()">
+        <input
+          id="offers-query"
+          name="offers-query"
+          type="text"
+          placeholder="desarrollador python, QA, datos…"
+          [value]="query()"
+          (input)="onQueryInput($event)"
+          (keydown.enter)="onEnter($event)"
+          [attr.disabled]="scanning() ? true : null"
+          autocomplete="off"
+        />
+        <button
+          type="button"
+          class="offers-search-btn"
+          [attr.disabled]="scanning() || !query().trim() ? true : null"
+          (click)="onSearchClick($event)"
+        >
+          @if (scanning()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Buscando</span>
+          } @else {
+            {{ btnLabel() }}
+          }
+        </button>
+      </div>
+      <a routerLink="/hoja-de-vida" class="offers-hv-link">Editar mi HV</a>
+    </div>
+  </div>
+
+  @if (scanning()) {
+    <div class="offers-loading" role="status" aria-live="polite">
+      <span class="spinner spinner--lg" aria-hidden="true"></span>
+      <div class="offers-loading-copy">
+        <strong>Buscando ofertas frescas</strong>
+        <p>{{ searchLive() || 'Revisando portales · solo últimas 24 h' }}</p>
+      </div>
+    </div>
+  }
+</div>

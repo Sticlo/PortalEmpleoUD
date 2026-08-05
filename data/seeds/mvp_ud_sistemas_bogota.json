@@ -1,0 +1,22 @@
+{
+  "tenant": {
+    "slug": "universidad-distrital",
+    "name": "Universidad Distrital Francisco José de Caldas",
+    "product_name": "RutaUD",
+    "rules": {
+      "default_city": "Bogotá",
+      "max_offer_age_hours": 24,
+      "prefer_modality": "hibrido",
+      "cv_generations_per_student_month": 10
+    }
+  },
+  "programs": [
+    {
+      "slug": "ingenieria-de-sistemas",
+      "name": "Ingeniería de Sistemas",
+      "faculty": "Facultad de Ingeniería",
+      "active_in_mvp": true
+    }
+  ],
+  "notes": "Para agregar un programa nuevo: copia un objeto en programs y actívalo en tenant.rules / admin. No forks del código."
+}

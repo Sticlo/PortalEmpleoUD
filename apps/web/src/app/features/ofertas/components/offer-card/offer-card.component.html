@@ -1,0 +1,46 @@
+<article
+  class="ocard"
+  [class.ocard--soft]="!offer().recommended"
+  [style.animation-delay.s]="0.04 + index() * 0.07"
+>
+  <div class="ocard-top">
+    <span class="src" [ngClass]="offer().sourceClass">{{ offer().source }}</span>
+    <span class="fresh">{{ offer().fresh }}</span>
+  </div>
+
+  <h2>{{ offer().title }}</h2>
+  <p class="ocard-co">{{ offer().company }}</p>
+
+  <ul class="ocard-meta">
+    <li>{{ offer().city }}</li>
+    <li>{{ offer().modalityLabel }}</li>
+    @if (offer().salary) {
+      <li class="ocard-salary">{{ offer().salary }}</li>
+    }
+  </ul>
+
+  <p class="ocard-desc">{{ offer().description }}</p>
+
+  <div class="ocard-foot">
+    <span class="match" [ngClass]="offer().matchClass">{{ offer().match }}% encaje</span>
+    <div class="ocard-actions">
+      @if (offer().url) {
+        <a
+          class="btn-outline btn-sm"
+          [href]="offer().url!"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Ver / postularme
+        </a>
+      }
+      @if (offer().recommended) {
+        <button type="button" class="btn-main btn-sm" (click)="prepare.emit(offer())">
+          Preparar CV
+        </button>
+      } @else {
+        <button type="button" class="btn-ghost btn-sm" disabled>Poco recomendada</button>
+      }
+    </div>
+  </div>
+</article>

@@ -1,0 +1,138 @@
+<form class="ats-form" (submit)="onSubmit($event)">
+  @if (step() === 0) {
+    <div class="ats-panel active">
+      <h2>¿Quién eres?</h2>
+      <p class="ats-help">Datos básicos que van arriba del CV. Sé preciso: esto viaja a cada postulación.</p>
+      <label class="field">
+        <span>Nombre completo</span>
+        <input type="text" [ngModel]="hv.profile().nombre" (ngModelChange)="hv.patch({ nombre: $event })" name="nombre" autocomplete="name" />
+      </label>
+      <label class="field">
+        <span>Correo o celular</span>
+        <input type="text" [ngModel]="hv.profile().contacto" (ngModelChange)="hv.patch({ contacto: $event })" name="contacto" autocomplete="email" />
+      </label>
+      <label class="field">
+        <span>Ciudad</span>
+        <input type="text" [ngModel]="hv.profile().ciudad" (ngModelChange)="hv.patch({ ciudad: $event })" name="ciudad" />
+      </label>
+      <label class="field">
+        <span>¿Qué buscas?</span>
+        <div class="choice-row" role="group">
+          <label class="choice">
+            <input type="radio" name="busca" value="Práctica profesional" [ngModel]="hv.profile().busca" (ngModelChange)="hv.patch({ busca: $event })" />
+            <span>Práctica</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="busca" value="Primer empleo" [ngModel]="hv.profile().busca" (ngModelChange)="hv.patch({ busca: $event })" />
+            <span>Primer empleo</span>
+          </label>
+        </div>
+      </label>
+    </div>
+  }
+
+  @if (step() === 1) {
+    <div class="ats-panel active">
+      <h2>Estudios</h2>
+      <p class="ats-help">Formato ATS: universidad, carrera y semestre. MVP piloto: Ingeniería de Sistemas.</p>
+      <label class="field">
+        <span>Universidad</span>
+        <input type="text" [ngModel]="hv.profile().universidad" (ngModelChange)="hv.patch({ universidad: $event })" name="universidad" />
+      </label>
+      <label class="field">
+        <span>Carrera</span>
+        <select [ngModel]="hv.profile().carrera" (ngModelChange)="hv.patch({ carrera: $event })" name="carrera">
+          <option>Ingeniería de Sistemas</option>
+          <option>Ingeniería Electrónica</option>
+          <option>Ingeniería Industrial</option>
+          <option>Otra carrera UD</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Semestre</span>
+        <select [ngModel]="hv.profile().semestre" (ngModelChange)="hv.patch({ semestre: $event })" name="semestre">
+          <option>5º semestre</option>
+          <option>6º semestre</option>
+          <option>7º semestre</option>
+          <option>8º semestre</option>
+          <option>9º semestre</option>
+          <option>10º semestre</option>
+        </select>
+      </label>
+    </div>
+  }
+
+  @if (step() === 2) {
+    <div class="ats-panel active">
+      <h2>Experiencia real</h2>
+      <p class="ats-help">
+        Proyectos, monitorías, freelance o prácticas. <strong>No inventes</strong>: la IA no puede inventar lo que no escribes.
+      </p>
+      <label class="field">
+        <span>Cargo / rol</span>
+        <input type="text" [ngModel]="hv.profile().cargo" (ngModelChange)="hv.patch({ cargo: $event })" name="cargo" placeholder="Ej: Developer / Monitor / Practicante" />
+      </label>
+      <label class="field">
+        <span>Empresa / proyecto</span>
+        <input type="text" [ngModel]="hv.profile().empresa" (ngModelChange)="hv.patch({ empresa: $event })" name="empresa" placeholder="Ej: Proyecto académico · empresa · freelance" />
+      </label>
+      <label class="field">
+        <span>Periodo</span>
+        <input type="text" [ngModel]="hv.profile().periodo" (ngModelChange)="hv.patch({ periodo: $event })" name="periodo" placeholder="Ej: 2024 – actualidad" />
+      </label>
+      <label class="field">
+        <span>Logros <em>(una línea = un bullet ATS)</em></span>
+        <textarea
+          rows="5"
+          [ngModel]="hv.profile().logros"
+          (ngModelChange)="hv.patch({ logros: $event })"
+          name="logros"
+          placeholder="Ej:&#10;Automatización de extracción de datos con Playwright&#10;APIs REST e integración con LLM&#10;Reportes y control de versiones con Git"
+        ></textarea>
+      </label>
+    </div>
+  }
+
+  @if (step() === 3) {
+    <div class="ats-panel active">
+      <h2>Skills (tu moneda de match)</h2>
+      <p class="ats-help">
+        Escribe y Enter. Mínimo 3. El radar y el CV adaptado <strong>solo</strong> usan esta lista.
+      </p>
+      <div class="skill-entry">
+        <input
+          type="text"
+          [(ngModel)]="skillDraft"
+          name="skillDraft"
+          placeholder="Ej: Python, SQL, Git, Playwright…"
+          (keydown)="onSkillKeydown($event)"
+        />
+        <button type="button" class="btn-outline" (click)="addSkill()">Agregar</button>
+      </div>
+      <div class="skill-chips">
+        @for (skill of hv.profile().skills; track skill; let i = $index) {
+          <span class="skill-chip">
+            {{ skill }}
+            <button type="button" aria-label="Quitar" (click)="removeSkill(i)">×</button>
+          </span>
+        }
+      </div>
+      <p class="hint">Si una oferta pide Docker y no está aquí, el CV lo dirá como gap — no lo inventamos.</p>
+    </div>
+  }
+
+  <div class="ats-nav">
+    @if (step() > 0) {
+      <button type="button" class="btn-outline" (click)="prev.emit()" [disabled]="saving()">Atrás</button>
+    }
+    <div class="ats-nav-right">
+      @if (step() < totalSteps() - 1) {
+        <button type="button" class="btn-main" (click)="next.emit()">Continuar</button>
+      } @else {
+        <button type="submit" class="btn-main" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar HV y buscar ofertas' }}
+        </button>
+      }
+    </div>
+  </div>
+</form>

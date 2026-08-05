@@ -1,0 +1,97 @@
+<section class="page-view">
+  <div class="page page--narrow">
+    <header class="page-head">
+      <p class="hv-kicker">Espacio empresas</p>
+      <h1>Publicar oferta</h1>
+      <p>
+        Canal directo con talento UD. Por ahora sin login — luego autenticación y multi-tenant.
+        La vacante vive <strong>24 horas</strong> en el radar.
+      </p>
+    </header>
+
+    @if (publishedId(); as id) {
+      <div class="empresa-success">
+        <h2>Oferta publicada</h2>
+        <p>Ya está en el radar de RutaUD (≤24 h).</p>
+        <p class="empresa-id">ID: {{ id }}</p>
+        <div class="empresa-success-actions">
+          <button type="button" class="btn-main" (click)="goOffers()">Ver ofertas</button>
+          <button type="button" class="btn-outline" (click)="reset()">Publicar otra</button>
+        </div>
+      </div>
+    } @else {
+      <form class="empresa-form" (submit)="submit($event)">
+        @if (error()) {
+          <p class="hv-step-error" role="alert">{{ error() }}</p>
+        }
+
+        <label class="field">
+          <span>Título del cargo</span>
+          <input type="text" name="title" [(ngModel)]="form.title" placeholder="Ej: Practicante Backend Python" />
+        </label>
+
+        <label class="field">
+          <span>Empresa</span>
+          <input type="text" name="company" [(ngModel)]="form.company" placeholder="Nombre de la empresa" />
+        </label>
+
+        <label class="field">
+          <span>Salario <em>(opcional)</em></span>
+          <input type="text" name="salary" [(ngModel)]="form.salary" placeholder="Ej: $1.800.000 (Mensual) · A convenir" />
+        </label>
+
+        <div class="empresa-row">
+          <label class="field">
+            <span>Ciudad</span>
+            <input type="text" name="city" [(ngModel)]="form.city" />
+          </label>
+          <label class="field">
+            <span>Modalidad</span>
+            <select name="modality" [(ngModel)]="form.modality">
+              <option value="hibrido">Híbrido</option>
+              <option value="presencial">Presencial</option>
+              <option value="remoto">Remoto</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Carrera UD a la que apunta</span>
+          <select name="program_slug" [(ngModel)]="form.program_slug">
+            <option value="ingenieria-de-sistemas">Ingeniería de Sistemas</option>
+            <option value="ingenieria-electronica">Ingeniería Electrónica</option>
+            <option value="ingenieria-industrial">Ingeniería Industrial</option>
+            <option value="otra">Otra carrera UD</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Descripción</span>
+          <textarea
+            name="description"
+            rows="7"
+            [(ngModel)]="form.description"
+            placeholder="Funciones, requisitos, beneficios… Sé concreto: los estudiantes adaptan su HV a este texto."
+          ></textarea>
+        </label>
+
+        <label class="field">
+          <span>Correo de contacto <em>(opcional)</em></span>
+          <input type="email" name="contact_email" [(ngModel)]="form.contact_email" placeholder="talento@empresa.com" />
+        </label>
+
+        <label class="field">
+          <span>Link para postular <em>(opcional)</em></span>
+          <input type="url" name="apply_url" [(ngModel)]="form.apply_url" placeholder="https://…" />
+        </label>
+
+        <div class="empresa-actions">
+          <a routerLink="/ofertas" class="btn-outline">Cancelar</a>
+          <button type="submit" class="btn-main" [disabled]="submitting()">
+            {{ submitting() ? 'Publicando…' : 'Publicar oferta' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</section>

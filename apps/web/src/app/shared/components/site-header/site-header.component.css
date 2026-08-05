@@ -1,0 +1,4 @@
+/* Estilos globales en styles.css (propuesta UD) */
+:host {
+  display: block;
+}

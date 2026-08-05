@@ -1,0 +1,27 @@
+<section class="page-view">
+  <div class="page page--narrow">
+    @if (loading() || adapting()) {
+      <header class="page-head">
+        <a routerLink="/ofertas" class="back">← Volver a ofertas</a>
+        <h1>{{ adapting() ? 'Adaptando tu HV a la oferta…' : 'Cargando oferta…' }}</h1>
+        <p>Solo usamos lo que declaraste. Nada inventado.</p>
+      </header>
+    } @else if (offer(); as o) {
+      <app-cv-result
+        [offer]="o"
+        [profile]="hv.profile()"
+        [cvText]="cvText()"
+        [cvNotes]="cvNotes()"
+        [adaptedWithAi]="adaptedWithAi()"
+        (copy)="copy()"
+        (done)="done()"
+      />
+    } @else {
+      <header class="page-head">
+        <a routerLink="/ofertas" class="back">← Volver a ofertas</a>
+        <h1>Oferta no encontrada</h1>
+        <p>Puede haber expirado (>24 h). Vuelve al radar y busca de nuevo.</p>
+      </header>
+    }
+  </div>
+</section>

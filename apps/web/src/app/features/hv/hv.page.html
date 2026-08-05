@@ -1,0 +1,63 @@
+<section class="page-view">
+  <div class="page page--wide">
+    <header class="page-head">
+      <p class="hv-kicker">Tu ventaja frente a otros portales</p>
+      <h1>Arma tu hoja de vida ATS</h1>
+      <p>
+        Una sola HV real. RutaUD la adapta a cada oferta <strong>sin inventar experiencia</strong>:
+        solo reordena y enfatiza lo que tú declaraste.
+      </p>
+    </header>
+
+    <div class="hv-value">
+      <div class="hv-value-item">
+        <strong>1 fuente de verdad</strong>
+        <span>Skills y logros reales — si no está aquí, no sale en el CV.</span>
+      </div>
+      <div class="hv-value-item">
+        <strong>ATS limpio</strong>
+        <span>Sin columnas ni iconos: legible por sistemas de selección.</span>
+      </div>
+      <div class="hv-value-item">
+        <strong>Adaptación por oferta</strong>
+        <span>Al postular, generamos un CV enfocado a esa vacante.</span>
+      </div>
+    </div>
+
+    <div class="hv-progress" aria-label="Completitud de la HV">
+      <div class="hv-progress-top">
+        <span>Completitud</span>
+        <strong>{{ hv.completenessPct() }}%</strong>
+      </div>
+      <div class="hv-progress-bar">
+        <span [style.width.%]="hv.completenessPct()"></span>
+      </div>
+      <ul class="hv-checklist">
+        @for (item of hv.completenessItems(); track item.id) {
+          <li [class.done]="item.done">{{ item.done ? '✓' : '○' }} {{ item.label }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="ats-builder">
+      <app-ats-steps [step]="step()" (stepChange)="setStep($event)" />
+
+      <div class="ats-grid">
+        <div>
+          @if (stepError()) {
+            <p class="hv-step-error" role="alert">{{ stepError() }}</p>
+          }
+          <app-ats-form
+            [step]="step()"
+            [totalSteps]="totalSteps"
+            [saving]="saving()"
+            (next)="next()"
+            (prev)="prev()"
+            (save)="save()"
+          />
+        </div>
+        <app-ats-preview />
+      </div>
+    </div>
+  </div>
+</section>

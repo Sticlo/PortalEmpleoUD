@@ -1,0 +1,13 @@
+<div class="ats-steps" role="tablist" aria-label="Pasos del CV">
+  @for (label of labels(); track $index) {
+    <button
+      type="button"
+      class="ats-step"
+      [class.active]="step() === $index"
+      [class.done]="step() > $index"
+      (click)="stepChange.emit($index)"
+    >
+      <i>{{ $index + 1 }}</i><span>{{ label }}</span>
+    </button>
+  }
+</div>

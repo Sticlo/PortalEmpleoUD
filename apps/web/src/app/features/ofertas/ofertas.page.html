@@ -1,0 +1,36 @@
+<section class="page-view offers-page">
+  <div class="page page--wide">
+    <app-radar-hero
+      [query]="searchQuery()"
+      (queryChange)="searchQuery.set($event)"
+      [scanning]="scanning()"
+      [searchLive]="searchLive()"
+      [subtitle]="subtitle()"
+      [btnLabel]="btnLabel()"
+      (search)="runSearch($event)"
+    />
+
+    @if (!scanning() && showResults()) {
+      <div class="offers-meta">
+        <p>
+          <strong>{{ store.count() }}</strong>
+          {{ store.count() === 1 ? 'oferta' : 'ofertas' }}
+          · ≤24 h · Bogotá
+          @if (store.lastQuery()) {
+            · {{ store.lastQuery() }}
+          }
+        </p>
+      </div>
+
+      @if (store.count() === 0) {
+        <p class="offers-empty">Sin resultados frescos. Prueba otra palabra clave.</p>
+      } @else {
+        <div class="offer-grid">
+          @for (offer of store.cards(); track offer.id; let i = $index) {
+            <app-offer-card [offer]="offer" [index]="i" (prepare)="prepareCv($event)" />
+          }
+        </div>
+      }
+    }
+  </div>
+</section>

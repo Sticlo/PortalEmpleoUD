@@ -1,0 +1,42 @@
+<aside class="ats-preview-wrap">
+  <div class="ats-preview-bar">
+    <span>Vista ATS</span>
+    <span class="ats-live-dot">En vivo</span>
+  </div>
+  <article class="ats-paper" aria-live="polite">
+    <h3 class="ats-name">{{ hv.profile().nombre || 'Tu nombre' }}</h3>
+    <p class="ats-line">{{ hv.profile().contacto || 'correo · celular' }}</p>
+    <p class="ats-line">{{ hv.profile().ciudad || 'Ciudad' }} · Busca: {{ hv.profile().busca }}</p>
+
+    <h4>EDUCACIÓN</h4>
+    <p class="ats-strong">{{ hv.profile().carrera }} — {{ hv.profile().semestre }}</p>
+    <p class="ats-line">{{ hv.profile().universidad }}</p>
+
+    <h4>EXPERIENCIA</h4>
+    @if (hv.profile().cargo || hv.profile().empresa) {
+      <p class="ats-strong">{{ hv.profile().cargo || 'Rol' }} — {{ hv.profile().empresa || 'Proyecto' }}</p>
+      <p class="ats-line">{{ hv.profile().periodo || '' }}</p>
+    } @else {
+      <p class="ats-line ats-muted">Agrega un rol o proyecto real</p>
+    }
+    <ul class="ats-bullets">
+      @for (item of hv.logrosList(); track item) {
+        <li>{{ item }}</li>
+      } @empty {
+        <li class="ats-muted">Logros reales, uno por línea</li>
+      }
+    </ul>
+
+    <h4>SKILLS</h4>
+    <p class="ats-line">
+      @if (hv.profile().skills.length) {
+        {{ hv.profile().skills.join(' · ') }}
+      } @else {
+        <span class="ats-muted">Agrega tus skills (mín. 3)</span>
+      }
+    </p>
+  </article>
+  <p class="ats-preview-note">
+    Formato limpio para ATS · sin inventos · la adaptación por oferta usa solo este contenido.
+  </p>
+</aside>

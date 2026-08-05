@@ -1,0 +1,85 @@
+"""Controller (MVC) — Ofertas."""
+
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Query, status
+
+from app.application.services.offer_service import OfferService
+from app.domain.models.offer import Offer
+from app.domain.schemas.api import (
+    CompanyOfferPublishRequest,
+    OfferCreateResponse,
+    OfferListResponse,
+)
+
+router = APIRouter()
+_service = OfferService()
+
+
+@router.get(
+    "/offers",
+    response_model=OfferListResponse,
+    summary="Listar ofertas frescas",
+    description=(
+        "Lista ofertas en memoria filtradas por ciudad y frescura. "
+        "Antes de responder **elimina** las que superen `max_age_hours`."
+    ),
+)
+def list_offers(
+    city: Optional[str] = Query(None, examples=["Bogotá"]),
+    program_slug: Optional[str] = Query(None, examples=["ingenieria-de-sistemas"]),
+    max_age_hours: Optional[int] = Query(None, ge=1, le=72, examples=[24]),
+):
+    return _service.list_offers(city=city, program_slug=program_slug, max_age_hours=max_age_hours)
+
+
+@router.post(
+    "/offers/publish",
+    response_model=OfferCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Publicar oferta (empresa)",
+    description=(
+        "Formulario para empresas aliadas. Sin autenticación en el MVP; "
+        "luego SSO / guard / multi-tenant. source=empresa, vigencia 24 h."
+    ),
+)
+def publish_offer(body: CompanyOfferPublishRequest):
+    try:
+        created = _service.publish_from_company(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return OfferCreateResponse(
+        ok=True,
+        id=created.id,
+        message="Oferta publicada. Aparecerá en el radar mientras tenga menos de 24 h.",
+    )
+
+
+@router.get(
+    "/offers/{offer_id}",
+    response_model=Offer,
+    summary="Obtener oferta por id",
+    responses={404: {"description": "No existe o expirada (>24 h)"}},
+)
+def get_offer(offer_id: str):
+    offer = _service.get_offer(offer_id)
+    if not offer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Oferta no encontrada o expirada (>24h)",
+        )
+    return offer
+
+
+@router.post(
+    "/offers",
+    response_model=OfferCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear oferta manual (dev)",
+)
+def create_offer(offer: Offer):
+    try:
+        created = _service.create_offer(offer)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return OfferCreateResponse(ok=True, id=created.id)
