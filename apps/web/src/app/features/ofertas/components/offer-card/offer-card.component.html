@@ -1,6 +1,6 @@
 <article
   class="ocard"
-  [class.ocard--soft]="!offer().recommended"
+  [class.ocard--soft]="offer().match < 40"
   [style.animation-delay.s]="0.04 + index() * 0.07"
 >
   <div class="ocard-top">
@@ -10,6 +10,9 @@
 
   <h2>{{ offer().title }}</h2>
   <p class="ocard-co">{{ offer().company }}</p>
+  @if (offer().programLabel) {
+    <p class="ocard-program">{{ offer().programLabel }}</p>
+  }
 
   <ul class="ocard-meta">
     <li>{{ offer().city }}</li>
@@ -31,16 +34,15 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          Ver / postularme
+          Ver en {{ offer().source }}
         </a>
       }
-      @if (offer().recommended) {
-        <button type="button" class="btn-main btn-sm" (click)="prepare.emit(offer())">
-          Preparar CV
-        </button>
-      } @else {
-        <button type="button" class="btn-ghost btn-sm" disabled>Poco recomendada</button>
-      }
+      <button type="button" class="btn-main btn-sm" (click)="prepare.emit(offer())">
+        Preparar CV
+      </button>
     </div>
   </div>
+  @if (offer().match < 40) {
+    <p class="ocard-warn">Baja afinidad con tu HV · el Ojo te lo detalla al preparar</p>
+  }
 </article>

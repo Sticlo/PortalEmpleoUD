@@ -27,6 +27,7 @@ export interface OfferCard {
   modalityLabel: string;
   salary: string;
   description: string;
+  programLabel: string;
   match: number;
   matchClass: 'match--high' | 'match--mid' | 'match--low';
   recommended: boolean;
@@ -60,4 +61,13 @@ export interface OfferListResponse {
   count: number;
   offers: ApiOffer[];
   purged: number;
+}
+
+export interface TodayJobsResponse {
+  day: string;
+  title: string;
+  count: number;
+  offers: ApiOffer[];
+  programs_covered: string[];
+  note?: string;
 }

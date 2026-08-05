@@ -1,5 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { parseSkillTokens } from '../../../../core/hv-ats-export';
 import { HvProfileService } from '../../../../core/hv-profile.service';
 
 @Component({
@@ -9,25 +10,37 @@ import { HvProfileService } from '../../../../core/hv-profile.service';
 })
 export class AtsFormComponent {
   readonly step = input.required<number>();
-  readonly totalSteps = input(4);
+  readonly totalSteps = input(5);
   readonly saving = input(false);
   readonly next = output<void>();
   readonly prev = output<void>();
   readonly save = output<void>();
+  readonly download = output<void>();
 
   readonly hv = inject(HvProfileService);
   skillDraft = '';
+  langDraft = '';
+
+  readonly carreras = [
+    'Ingeniería de Sistemas',
+    'Ingeniería Civil',
+    'Ingeniería Electrónica',
+    'Ingeniería Forestal',
+    'Ingeniería Química',
+    'Ingeniería Industrial',
+    'Licenciatura en Artes',
+    'Otra carrera UD',
+  ];
 
   addSkill(): void {
-    const raw = this.skillDraft.trim();
-    if (!raw) return;
+    const tokens = parseSkillTokens(this.skillDraft);
+    if (!tokens.length) return;
     const current = [...this.hv.profile().skills];
-    raw.split(',').forEach((part) => {
-      const s = part.trim();
-      if (s && !current.some((x) => x.toLowerCase() === s.toLowerCase())) {
+    for (const s of tokens) {
+      if (!current.some((x) => x.toLowerCase() === s.toLowerCase())) {
         current.push(s);
       }
-    });
+    }
     this.hv.setSkills(current);
     this.skillDraft = '';
   }
@@ -42,6 +55,32 @@ export class AtsFormComponent {
     if (event.key === 'Enter') {
       event.preventDefault();
       this.addSkill();
+    }
+  }
+
+  addLanguage(): void {
+    const tokens = parseSkillTokens(this.langDraft);
+    if (!tokens.length) return;
+    const current = [...this.hv.profile().languages];
+    for (const s of tokens) {
+      if (!current.some((x) => x.toLowerCase() === s.toLowerCase())) {
+        current.push(s);
+      }
+    }
+    this.hv.setLanguages(current);
+    this.langDraft = '';
+  }
+
+  removeLanguage(index: number): void {
+    const current = [...this.hv.profile().languages];
+    current.splice(index, 1);
+    this.hv.setLanguages(current);
+  }
+
+  onLangKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.addLanguage();
     }
   }
 

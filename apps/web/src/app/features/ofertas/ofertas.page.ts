@@ -31,10 +31,13 @@ export class OfertasPage implements OnInit {
 
   ngOnInit(): void {
     this.searchQuery.set(searchQueryFromProfile(this.hv.profile()));
-    if (isPlatformBrowser(this.platformId) && this.store.cards().length) {
-      this.showResults.set(true);
-      this.btnLabel.set('Buscar de nuevo');
-      this.subtitle.set('Resultados listos. Cambia la palabra para refrescar.');
+    if (isPlatformBrowser(this.platformId)) {
+      void this.store.loadToday();
+      if (this.store.cards().length) {
+        this.showResults.set(true);
+        this.btnLabel.set('Buscar de nuevo');
+        this.subtitle.set('Resultados listos. Cambia la palabra para refrescar.');
+      }
     }
   }
 
@@ -84,7 +87,6 @@ export class OfertasPage implements OnInit {
   }
 
   prepareCv(offer: OfferCard): void {
-    if (!offer.recommended) return;
     void this.router.navigate(['/cv', offer.id]);
   }
 }

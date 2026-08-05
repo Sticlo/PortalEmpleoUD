@@ -6,6 +6,43 @@ const SOURCE_CLASS: Record<string, string> = {
   elempleo: 'src--el',
   indeed: 'src--in',
   linkedin: 'src--li',
+  empresa: 'src--empresa',
+  'empleos-de-hoy': 'src--hoy',
+};
+
+type CareerFamily =
+  | 'sistemas'
+  | 'civil'
+  | 'electronica'
+  | 'forestal'
+  | 'quimica'
+  | 'industrial'
+  | 'artes'
+  | 'otra';
+
+const CAREER_PATTERNS: Record<CareerFamily, RegExp[]> = {
+  sistemas: [
+    /sistema/,
+    /software/,
+    /desarroll/,
+    /programad/,
+    /backend/,
+    /frontend/,
+    /full\s*stack/,
+    /\bqa\b/,
+    /datos/,
+    /data/,
+    /devops/,
+    /inform[aá]tica/,
+    /computaci/,
+  ],
+  civil: [/civil/, /estructur/, /cimentac/, /obra\b/, /residente/, /topograf/, /vial/],
+  electronica: [/electr[oó]n/, /\biot\b/, /embebido/, /hardware/, /circuito/],
+  forestal: [/forestal/, /ecol[oó]g/, /silvicult/, /ambiental/],
+  quimica: [/qu[ií]mic/, /laboratorio/, /procesos qu[ií]m/],
+  industrial: [/industrial/, /log[ií]stica/, /producci[oó]n/, /calidad/],
+  artes: [/artes/, /docente/, /expresi[oó]n/, /taller art/, /mediaci[oó]n cultural/],
+  otra: [],
 };
 
 function sourceLabel(source: string): string {
@@ -14,6 +51,8 @@ function sourceLabel(source: string): string {
     elempleo: 'Elempleo',
     indeed: 'Indeed',
     linkedin: 'LinkedIn',
+    empresa: 'Empresa',
+    'empleos-de-hoy': 'Empleos de hoy',
   };
   return map[source.toLowerCase()] ?? source;
 }
@@ -36,17 +75,106 @@ export function formatFresh(publishedAt: string): string {
   return 'Hace 1 día';
 }
 
-/** Encaje simple por skills de la HV vs título+descripción. */
-export function scoreMatch(offer: ApiOffer, skills: string[]): number {
-  if (!skills.length) return 55;
+function detectOfferCareer(haystack: string, programTags: string[] = []): CareerFamily {
+  const tags = programTags.join(' ').toLowerCase();
+  const blob = `${haystack} ${tags}`;
+  const order: CareerFamily[] = [
+    'civil',
+    'electronica',
+    'forestal',
+    'quimica',
+    'artes',
+    'industrial',
+    'sistemas',
+  ];
+  for (const family of order) {
+    if (CAREER_PATTERNS[family].some((re) => re.test(blob))) return family;
+  }
+  return 'otra';
+}
+
+function detectProfileCareer(profile: HvProfile): CareerFamily {
+  const carrera = profile.carrera.toLowerCase();
+  const skills = profile.skills.join(' ').toLowerCase();
+  const blob = `${carrera} ${skills} ${profile.resumen}`.toLowerCase();
+
+  if (/civil/.test(carrera)) return 'civil';
+  if (/electr/.test(carrera)) return 'electronica';
+  if (/forestal|ambiental/.test(carrera)) return 'forestal';
+  if (/qu[ií]mic/.test(carrera)) return 'quimica';
+  if (/industrial/.test(carrera)) return 'industrial';
+  if (/artes|licenciatura/.test(carrera)) return 'artes';
+  if (/sistema|software|datos|telem[aá]tica|inform[aá]tica/.test(carrera)) return 'sistemas';
+
+  // Inferencia por skills si la carrera es "Otra"
+  if (CAREER_PATTERNS.sistemas.some((re) => re.test(blob)) || /python|angular|java|react|\.net|sql/.test(skills)) {
+    return 'sistemas';
+  }
+  return 'otra';
+}
+
+function careerFamilyLabel(f: CareerFamily): string {
+  const map: Record<CareerFamily, string> = {
+    sistemas: 'Sistemas / software',
+    civil: 'Ingeniería Civil',
+    electronica: 'Electrónica',
+    forestal: 'Forestal / ambiental',
+    quimica: 'Química',
+    industrial: 'Industrial',
+    artes: 'Artes',
+    otra: 'otra área',
+  };
+  return map[f];
+}
+
+/**
+ * Encaje honesto: skills + carrera.
+ * Civil vs HV de sistemas → % bajo (no ~45% por defecto).
+ */
+export function scoreMatch(offer: ApiOffer, profile: HvProfile): number {
   const haystack = `${offer.title} ${offer.description}`.toLowerCase();
+  const offerCareer = detectOfferCareer(haystack, offer.program_tags || []);
+  const profileCareer = detectProfileCareer(profile);
+  const skills = profile.skills.filter(Boolean);
+
   let hits = 0;
   for (const skill of skills) {
     const s = skill.trim().toLowerCase();
     if (s.length >= 2 && haystack.includes(s)) hits += 1;
   }
-  const ratio = hits / skills.length;
-  return Math.min(95, Math.round(45 + ratio * 50));
+  const ratio = skills.length ? hits / skills.length : 0;
+
+  const careerMismatch =
+    offerCareer !== 'otra' &&
+    profileCareer !== 'otra' &&
+    offerCareer !== profileCareer;
+
+  if (careerMismatch) {
+    // Máx ~22%: deja claro que no es tu carrera, sin llegar a 0 absurdo
+    return Math.min(22, Math.max(8, Math.round(8 + ratio * 14)));
+  }
+
+  if (!skills.length) return 40;
+  return Math.min(95, Math.round(40 + ratio * 55));
+}
+
+/** Texto corto para el Ojo cuando hay choque de carrera. */
+export function careerMismatchNote(offer: ApiOffer, profile: HvProfile): string | null {
+  const haystack = `${offer.title} ${offer.description}`.toLowerCase();
+  const offerCareer = detectOfferCareer(haystack, offer.program_tags || []);
+  const profileCareer = detectProfileCareer(profile);
+  if (
+    offerCareer === 'otra' ||
+    profileCareer === 'otra' ||
+    offerCareer === profileCareer
+  ) {
+    return null;
+  }
+  return (
+    `Esta vacante apunta a ${careerFamilyLabel(offerCareer)}, y tu HV es de ` +
+    `${careerFamilyLabel(profileCareer)}. El encaje bajo es intencional: puedes preparar el CV igual, ` +
+    `pero el Ojo te avisa que el perfil no es el natural para esta oferta.`
+  );
 }
 
 function matchClass(score: number): OfferCard['matchClass'] {
@@ -60,29 +188,45 @@ export function buildCvFromProfile(offer: ApiOffer, profile: HvProfile): { body:
   const skillLine = skills.length ? skills.join(', ') : 'las herramientas de tu formación';
   const haystack = `${offer.title} ${offer.description}`.toLowerCase();
   const missing = commonGaps(haystack, skills);
+  const careerNote = careerMismatchNote(offer, profile);
+
+  const exp = profile.experiences.find(
+    (e) => e.cargo.trim() || e.empresa.trim() || e.logros.trim(),
+  );
+  const logros = exp
+    ? exp.logros
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
 
   const body = [
-    `${profile.busca || 'Oportunidad laboral'} enfocada en ${offer.title}.`,
+    profile.resumen.trim() || `${profile.busca || 'Oportunidad laboral'} enfocada en ${offer.title}.`,
     `Estudiante de ${profile.carrera} (${profile.semestre}) en ${profile.universidad}.`,
     skills.length
       ? `Experiencia práctica con ${skillLine}.`
       : 'Perfil en formación con proyectos académicos.',
-    profile.cargo && profile.empresa
-      ? `Experiencia reciente: ${profile.cargo} en ${profile.empresa}${profile.periodo ? ` (${profile.periodo})` : ''}.`
+    exp && (exp.cargo || exp.empresa)
+      ? `Experiencia reciente: ${exp.cargo} en ${exp.empresa}${exp.periodo ? ` (${exp.periodo})` : ''}.`
       : '',
-    profile.logros.trim()
-      ? `Logros: ${profile.logros.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 3).join('; ')}.`
-      : '',
+    logros.length ? `Logros: ${logros.join('; ')}.` : '',
     `Interés en postularme a ${offer.company} · ${offer.city}.`,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const gap = missing.length
-    ? `La oferta menciona ${missing.join(', ')} y no está en tu HV — no lo inventamos en el CV.`
-    : 'Sin gaps críticos respecto a tu HV.';
+  const parts: string[] = [];
+  if (careerNote) parts.push(careerNote);
+  if (missing.length) {
+    parts.push(
+      `La oferta menciona ${missing.join(', ')} y no está en tu HV — no lo inventamos en el CV.`,
+    );
+  } else if (!careerNote) {
+    parts.push('Sin gaps críticos respecto a tu HV.');
+  }
 
-  return { body, gap };
+  return { body, gap: parts.join(' ') };
 }
 
 function commonGaps(haystack: string, skills: string[]): string[] {
@@ -101,14 +245,21 @@ function commonGaps(haystack: string, skills: string[]): string[] {
     'typescript',
     'power bi',
   ];
-  return candidates.filter((c) => haystack.includes(c) && ![...have].some((h) => h.includes(c) || c.includes(h)));
+  return candidates.filter(
+    (c) => haystack.includes(c) && ![...have].some((h) => h.includes(c) || c.includes(h)),
+  );
 }
 
 export function toOfferCard(offer: ApiOffer, profile: HvProfile): OfferCard {
-  const match = scoreMatch(offer, profile.skills);
+  const match = scoreMatch(offer, profile);
   const { body, gap } = buildCvFromProfile(offer, profile);
   const src = offer.source.toLowerCase();
   const modality = modalityLabel(offer.modality);
+  const programLabel =
+    offer.program_tags?.find((t) => t.includes(' ') || t.includes('Ingenier') || t.includes('Licenc')) ||
+    offer.program_tags?.[1] ||
+    offer.program_tags?.[0] ||
+    '';
 
   return {
     id: offer.id,
@@ -123,9 +274,11 @@ export function toOfferCard(offer: ApiOffer, profile: HvProfile): OfferCard {
     modalityLabel: modality,
     salary: (offer.salary || '').trim(),
     description: offer.description || 'Sin descripción detallada en el portal.',
+    programLabel,
     match,
     matchClass: matchClass(match),
-    recommended: match >= 50,
+    // Nunca bloqueamos Preparar CV: el Ojo explica la afinidad baja
+    recommended: true,
     url: offer.url,
     publishedAt: offer.published_at,
     rawDescription: offer.description,
@@ -135,13 +288,17 @@ export function toOfferCard(offer: ApiOffer, profile: HvProfile): OfferCard {
   };
 }
 
-/** Query de búsqueda a partir de la HV (MVP Sistemas). */
+/** Query de búsqueda a partir de la HV. */
 export function searchQueryFromProfile(profile: HvProfile): string {
   const skills = profile.skills.map((s) => s.toLowerCase());
   if (skills.some((s) => s.includes('python'))) return 'desarrollador python';
   if (skills.some((s) => s.includes('java'))) return 'desarrollador java';
   if (skills.some((s) => /qa|playwright|selenium|test/.test(s))) return 'qa automation';
   const carrera = profile.carrera.toLowerCase();
-  if (carrera.includes('sistema') || carrera.includes('software')) return 'desarrollador';
+  if (carrera.includes('civil')) return 'ingeniero civil';
+  if (carrera.includes('electr')) return 'ingeniero electronico';
+  if (carrera.includes('sistema') || carrera.includes('software') || carrera.includes('datos')) {
+    return 'desarrollador';
+  }
   return 'desarrollador';
 }

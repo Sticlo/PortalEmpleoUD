@@ -11,15 +11,42 @@ export class OffersStoreService {
   private readonly hv = inject(HvProfileService);
 
   readonly cards = signal<OfferCard[]>([]);
+  readonly todayCards = signal<OfferCard[]>([]);
+  readonly todayDay = signal('');
+  readonly todayPrograms = signal<string[]>([]);
   readonly lastQuery = signal('');
   readonly lastPurged = signal(0);
   readonly loading = signal(false);
+  readonly loadingToday = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly count = computed(() => this.cards().length);
+  readonly todayCount = computed(() => this.todayCards().length);
 
   getById(id: string): OfferCard | undefined {
-    return this.cards().find((o) => o.id === id);
+    return this.cards().find((o) => o.id === id) ?? this.todayCards().find((o) => o.id === id);
+  }
+
+  async loadToday(): Promise<OfferCard[]> {
+    this.loadingToday.set(true);
+    try {
+      const res = await firstValueFrom(this.api.today());
+      const profile = this.hv.profile();
+      const cards = (res.offers ?? []).map((o) => {
+        const card = toOfferCard(o, profile);
+        return { ...card, recommended: true };
+      });
+      this.todayCards.set(cards);
+      this.todayDay.set(res.day || '');
+      this.todayPrograms.set(res.programs_covered || []);
+      return cards;
+    } catch (err) {
+      console.warn('No se pudieron cargar Empleos de hoy', err);
+      this.todayCards.set([]);
+      return [];
+    } finally {
+      this.loadingToday.set(false);
+    }
   }
 
   async search(query?: string): Promise<OfferCard[]> {
@@ -57,7 +84,13 @@ export class OffersStoreService {
     try {
       const offer = await firstValueFrom(this.api.getById(id));
       const card = toOfferCard(offer, this.hv.profile());
-      this.cards.update((list) => (list.some((o) => o.id === id) ? list : [...list, card]));
+      if (offer.source === 'empleos-de-hoy') {
+        this.todayCards.update((list) =>
+          list.some((o) => o.id === id) ? list : [...list, card],
+        );
+      } else {
+        this.cards.update((list) => (list.some((o) => o.id === id) ? list : [...list, card]));
+      }
       return card;
     } catch {
       return null;

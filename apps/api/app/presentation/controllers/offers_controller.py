@@ -5,15 +5,18 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.application.services.offer_service import OfferService
+from app.application.services.today_jobs_service import TodayJobsService, sync_today_into_store
 from app.domain.models.offer import Offer
 from app.domain.schemas.api import (
     CompanyOfferPublishRequest,
     OfferCreateResponse,
     OfferListResponse,
+    TodayJobsResponse,
 )
 
 router = APIRouter()
 _service = OfferService()
+_today = TodayJobsService()
 
 
 @router.get(
@@ -31,6 +34,20 @@ def list_offers(
     max_age_hours: Optional[int] = Query(None, ge=1, le=72, examples=[24]),
 ):
     return _service.list_offers(city=city, program_slug=program_slug, max_age_hours=max_age_hours)
+
+
+@router.get(
+    "/offers/today",
+    response_model=TodayJobsResponse,
+    summary="Empleos de hoy",
+    description=(
+        "Hasta 10 ofertas **reales** ≤24 h de Computrabajo, Elempleo y LinkedIn "
+        "para varias carreras UD. Cada oferta trae portal + link original. "
+        "Se cachea el día (Colombia); `refresh=true` fuerza nuevo scrape."
+    ),
+)
+def empleos_de_hoy(refresh: bool = Query(False, description="Forzar scrape (ignora cache del día)")):
+    return _today.list_today(force_refresh=refresh)
 
 
 @router.post(
@@ -63,6 +80,10 @@ def publish_offer(body: CompanyOfferPublishRequest):
 )
 def get_offer(offer_id: str):
     offer = _service.get_offer(offer_id)
+    if not offer:
+        # Intentar materializar el carrusel cacheado del día
+        sync_today_into_store(force_refresh=False)
+        offer = _service.get_offer(offer_id)
     if not offer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

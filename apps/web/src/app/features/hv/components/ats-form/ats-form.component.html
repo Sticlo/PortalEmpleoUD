@@ -2,14 +2,24 @@
   @if (step() === 0) {
     <div class="ats-panel active">
       <h2>¿Quién eres?</h2>
-      <p class="ats-help">Datos básicos que van arriba del CV. Sé preciso: esto viaja a cada postulación.</p>
+      <p class="ats-help">Encabezado ATS: datos claros, sin fotos ni columnas. Edita todo lo que quieras.</p>
       <label class="field">
         <span>Nombre completo</span>
         <input type="text" [ngModel]="hv.profile().nombre" (ngModelChange)="hv.patch({ nombre: $event })" name="nombre" autocomplete="name" />
       </label>
+      <div class="ats-row">
+        <label class="field">
+          <span>Correo</span>
+          <input type="email" [ngModel]="hv.profile().email" (ngModelChange)="hv.patch({ email: $event })" name="email" autocomplete="email" placeholder="tu@correo.com" />
+        </label>
+        <label class="field">
+          <span>Celular</span>
+          <input type="tel" [ngModel]="hv.profile().telefono" (ngModelChange)="hv.patch({ telefono: $event })" name="telefono" autocomplete="tel" placeholder="300…" />
+        </label>
+      </div>
       <label class="field">
-        <span>Correo o celular</span>
-        <input type="text" [ngModel]="hv.profile().contacto" (ngModelChange)="hv.patch({ contacto: $event })" name="contacto" autocomplete="email" />
+        <span>LinkedIn / portafolio <em>(opcional)</em></span>
+        <input type="url" [ngModel]="hv.profile().linkedin" (ngModelChange)="hv.patch({ linkedin: $event })" name="linkedin" placeholder="https://linkedin.com/in/…" />
       </label>
       <label class="field">
         <span>Ciudad</span>
@@ -28,13 +38,23 @@
           </label>
         </div>
       </label>
+      <label class="field">
+        <span>Perfil profesional <em>(2–4 líneas ATS)</em></span>
+        <textarea
+          rows="4"
+          [ngModel]="hv.profile().resumen"
+          (ngModelChange)="hv.patch({ resumen: $event })"
+          name="resumen"
+          placeholder="Ej: Estudiante de Ingeniería de Sistemas (7º) con experiencia en APIs Python y automatización. Busco práctica en backend o QA."
+        ></textarea>
+      </label>
     </div>
   }
 
   @if (step() === 1) {
     <div class="ats-panel active">
       <h2>Estudios</h2>
-      <p class="ats-help">Formato ATS: universidad, carrera y semestre. MVP piloto: Ingeniería de Sistemas.</p>
+      <p class="ats-help">Universidad, carrera y semestre — formato limpio para ATS.</p>
       <label class="field">
         <span>Universidad</span>
         <input type="text" [ngModel]="hv.profile().universidad" (ngModelChange)="hv.patch({ universidad: $event })" name="universidad" />
@@ -42,10 +62,9 @@
       <label class="field">
         <span>Carrera</span>
         <select [ngModel]="hv.profile().carrera" (ngModelChange)="hv.patch({ carrera: $event })" name="carrera">
-          <option>Ingeniería de Sistemas</option>
-          <option>Ingeniería Electrónica</option>
-          <option>Ingeniería Industrial</option>
-          <option>Otra carrera UD</option>
+          @for (c of carreras; track c) {
+            <option [value]="c">{{ c }}</option>
+          }
         </select>
       </label>
       <label class="field">
@@ -57,6 +76,7 @@
           <option>8º semestre</option>
           <option>9º semestre</option>
           <option>10º semestre</option>
+          <option>Egresado</option>
         </select>
       </label>
     </div>
@@ -66,54 +86,119 @@
     <div class="ats-panel active">
       <h2>Experiencia real</h2>
       <p class="ats-help">
-        Proyectos, monitorías, freelance o prácticas. <strong>No inventes</strong>: la IA no puede inventar lo que no escribes.
+        Agrega cuantos bloques necesites (práctica, monitoría, freelance). <strong>No inventes</strong>.
       </p>
-      <label class="field">
-        <span>Cargo / rol</span>
-        <input type="text" [ngModel]="hv.profile().cargo" (ngModelChange)="hv.patch({ cargo: $event })" name="cargo" placeholder="Ej: Developer / Monitor / Practicante" />
-      </label>
-      <label class="field">
-        <span>Empresa / proyecto</span>
-        <input type="text" [ngModel]="hv.profile().empresa" (ngModelChange)="hv.patch({ empresa: $event })" name="empresa" placeholder="Ej: Proyecto académico · empresa · freelance" />
-      </label>
-      <label class="field">
-        <span>Periodo</span>
-        <input type="text" [ngModel]="hv.profile().periodo" (ngModelChange)="hv.patch({ periodo: $event })" name="periodo" placeholder="Ej: 2024 – actualidad" />
-      </label>
-      <label class="field">
-        <span>Logros <em>(una línea = un bullet ATS)</em></span>
-        <textarea
-          rows="5"
-          [ngModel]="hv.profile().logros"
-          (ngModelChange)="hv.patch({ logros: $event })"
-          name="logros"
-          placeholder="Ej:&#10;Automatización de extracción de datos con Playwright&#10;APIs REST e integración con LLM&#10;Reportes y control de versiones con Git"
-        ></textarea>
-      </label>
+
+      @for (exp of hv.profile().experiences; track exp.id; let i = $index) {
+        <div class="ats-block">
+          <div class="ats-block-head">
+            <strong>Experiencia {{ i + 1 }}</strong>
+            @if (hv.profile().experiences.length > 1) {
+              <button type="button" class="btn-ghost btn-sm" (click)="hv.removeExperience(exp.id)">Quitar</button>
+            }
+          </div>
+          <label class="field">
+            <span>Cargo / rol</span>
+            <input type="text" [ngModel]="exp.cargo" (ngModelChange)="hv.updateExperience(exp.id, { cargo: $event })" [name]="'cargo-' + exp.id" placeholder="Ej: Practicante Backend" />
+          </label>
+          <label class="field">
+            <span>Empresa / organización</span>
+            <input type="text" [ngModel]="exp.empresa" (ngModelChange)="hv.updateExperience(exp.id, { empresa: $event })" [name]="'empresa-' + exp.id" placeholder="Ej: Empresa · semillero · freelance" />
+          </label>
+          <label class="field">
+            <span>Periodo</span>
+            <input type="text" [ngModel]="exp.periodo" (ngModelChange)="hv.updateExperience(exp.id, { periodo: $event })" [name]="'periodo-' + exp.id" placeholder="Ej: Ene 2025 – actualidad" />
+          </label>
+          <label class="field">
+            <span>Logros <em>(una línea = un bullet)</em></span>
+            <textarea
+              rows="4"
+              [ngModel]="exp.logros"
+              (ngModelChange)="hv.updateExperience(exp.id, { logros: $event })"
+              [name]="'logros-' + exp.id"
+              placeholder="Automatización de reportes con Python&#10;APIs REST y documentación&#10;Trabajo en equipo con Git"
+            ></textarea>
+          </label>
+        </div>
+      }
+
+      <button type="button" class="btn-outline" (click)="hv.addExperience()">+ Otra experiencia</button>
     </div>
   }
 
   @if (step() === 3) {
     <div class="ats-panel active">
+      <h2>Proyectos e idiomas</h2>
+      <p class="ats-help">Proyectos académicos o personales cuentan. Idiomas opcionales.</p>
+
+      @for (proj of hv.profile().projects; track proj.id; let i = $index) {
+        <div class="ats-block">
+          <div class="ats-block-head">
+            <strong>Proyecto {{ i + 1 }}</strong>
+            <button type="button" class="btn-ghost btn-sm" (click)="hv.removeProject(proj.id)">Quitar</button>
+          </div>
+          <label class="field">
+            <span>Nombre</span>
+            <input type="text" [ngModel]="proj.nombre" (ngModelChange)="hv.updateProject(proj.id, { nombre: $event })" [name]="'pnombre-' + proj.id" />
+          </label>
+          <label class="field">
+            <span>Descripción</span>
+            <textarea
+              rows="3"
+              [ngModel]="proj.descripcion"
+              (ngModelChange)="hv.updateProject(proj.id, { descripcion: $event })"
+              [name]="'pdesc-' + proj.id"
+              placeholder="Qué hiciste y el resultado"
+            ></textarea>
+          </label>
+          <label class="field">
+            <span>Tecnologías</span>
+            <input type="text" [ngModel]="proj.tecnologias" (ngModelChange)="hv.updateProject(proj.id, { tecnologias: $event })" [name]="'ptech-' + proj.id" placeholder="Python, FastAPI, PostgreSQL" />
+          </label>
+        </div>
+      }
+
+      <button type="button" class="btn-outline" (click)="hv.addProject()">+ Agregar proyecto</button>
+
+      <label class="field" style="margin-top: 20px">
+        <span>Idiomas</span>
+        <div class="skill-entry">
+          <input type="text" [(ngModel)]="langDraft" name="langDraft" placeholder="Ej: Español nativo, Inglés B1" (keydown)="onLangKeydown($event)" />
+          <button type="button" class="btn-outline" (click)="addLanguage()">Agregar</button>
+        </div>
+        <div class="skill-chips">
+          @for (lang of hv.profile().languages; track lang; let i = $index) {
+            <span class="skill-chip">
+              {{ lang }}
+              <button type="button" aria-label="Quitar" (click)="removeLanguage(i)">×</button>
+            </span>
+          }
+        </div>
+      </label>
+    </div>
+  }
+
+  @if (step() === 4) {
+    <div class="ats-panel active">
       <h2>Skills (tu moneda de match)</h2>
       <p class="ats-help">
-        Escribe y Enter. Mínimo 3. El radar y el CV adaptado <strong>solo</strong> usan esta lista.
+        Escribe y Enter. Mínimo 3. El radar y el CV adaptado <strong>solo</strong> usan esta lista + tu experiencia.
       </p>
       <div class="skill-entry">
         <input
           type="text"
           [(ngModel)]="skillDraft"
           name="skillDraft"
-          placeholder="Ej: Python, SQL, Git, Playwright…"
+          placeholder="Una skill y Enter · o varias separadas por coma"
           (keydown)="onSkillKeydown($event)"
         />
         <button type="button" class="btn-outline" (click)="addSkill()">Agregar</button>
       </div>
-      <div class="skill-chips">
-        @for (skill of hv.profile().skills; track skill; let i = $index) {
+      <div class="skill-chips" aria-label="Skills agregadas">
+        @for (skill of hv.profile().skills; track $index) {
           <span class="skill-chip">
-            {{ skill }}
-            <button type="button" aria-label="Quitar" (click)="removeSkill(i)">×</button>
+            <span class="skill-chip-label">{{ skill }}</span>
+            <button type="button" aria-label="Quitar {{ skill }}" (click)="removeSkill($index)">×</button>
           </span>
         }
       </div>
@@ -129,6 +214,9 @@
       @if (step() < totalSteps() - 1) {
         <button type="button" class="btn-main" (click)="next.emit()">Continuar</button>
       } @else {
+        <button type="button" class="btn-outline" (click)="download.emit()" [disabled]="saving()">
+          Descargar PDF
+        </button>
         <button type="submit" class="btn-main" [disabled]="saving()">
           {{ saving() ? 'Guardando…' : 'Guardar HV y buscar ofertas' }}
         </button>

@@ -1,42 +1,88 @@
 <aside class="ats-preview-wrap">
   <div class="ats-preview-bar">
     <span>Vista ATS</span>
-    <span class="ats-live-dot">En vivo</span>
+    <span class="ats-live-dot">En vivo · editable en el formulario</span>
   </div>
   <article class="ats-paper" aria-live="polite">
-    <h3 class="ats-name">{{ hv.profile().nombre || 'Tu nombre' }}</h3>
-    <p class="ats-line">{{ hv.profile().contacto || 'correo · celular' }}</p>
-    <p class="ats-line">{{ hv.profile().ciudad || 'Ciudad' }} · Busca: {{ hv.profile().busca }}</p>
+    <button type="button" class="ats-jump" (click)="jumpToStep.emit(0)" title="Editar datos">
+      <h3 class="ats-name">{{ hv.profile().nombre || 'Tu nombre' }}</h3>
+      <p class="ats-line">{{ hv.contactLine() || 'correo · celular · LinkedIn' }}</p>
+      <p class="ats-line">{{ hv.profile().ciudad || 'Ciudad' }} · Busca: {{ hv.profile().busca }}</p>
+    </button>
 
-    <h4>EDUCACIÓN</h4>
-    <p class="ats-strong">{{ hv.profile().carrera }} — {{ hv.profile().semestre }}</p>
-    <p class="ats-line">{{ hv.profile().universidad }}</p>
-
-    <h4>EXPERIENCIA</h4>
-    @if (hv.profile().cargo || hv.profile().empresa) {
-      <p class="ats-strong">{{ hv.profile().cargo || 'Rol' }} — {{ hv.profile().empresa || 'Proyecto' }}</p>
-      <p class="ats-line">{{ hv.profile().periodo || '' }}</p>
+    @if (hv.profile().resumen.trim()) {
+      <button type="button" class="ats-jump" (click)="jumpToStep.emit(0)">
+        <h4>PERFIL</h4>
+        <p class="ats-line">{{ hv.profile().resumen }}</p>
+      </button>
     } @else {
-      <p class="ats-line ats-muted">Agrega un rol o proyecto real</p>
+      <button type="button" class="ats-jump" (click)="jumpToStep.emit(0)">
+        <h4>PERFIL</h4>
+        <p class="ats-line ats-muted">Escribe un perfil de 2–4 líneas</p>
+      </button>
     }
-    <ul class="ats-bullets">
-      @for (item of hv.logrosList(); track item) {
-        <li>{{ item }}</li>
-      } @empty {
-        <li class="ats-muted">Logros reales, uno por línea</li>
-      }
-    </ul>
 
-    <h4>SKILLS</h4>
-    <p class="ats-line">
-      @if (hv.profile().skills.length) {
-        {{ hv.profile().skills.join(' · ') }}
+    <button type="button" class="ats-jump" (click)="jumpToStep.emit(1)">
+      <h4>EDUCACIÓN</h4>
+      <p class="ats-strong">{{ hv.profile().carrera }} — {{ hv.profile().semestre }}</p>
+      <p class="ats-line">{{ hv.profile().universidad }}</p>
+    </button>
+
+    <button type="button" class="ats-jump" (click)="jumpToStep.emit(2)">
+      <h4>EXPERIENCIA</h4>
+      @if (hasExperience()) {
+        @for (exp of hv.profile().experiences; track exp.id) {
+          @if (exp.cargo.trim() || exp.empresa.trim() || exp.logros.trim()) {
+            <p class="ats-strong">{{ exp.cargo || 'Rol' }} — {{ exp.empresa || 'Organización' }}</p>
+            @if (exp.periodo) {
+              <p class="ats-line">{{ exp.periodo }}</p>
+            }
+            <ul class="ats-bullets">
+              @for (b of bullets(exp.logros); track b) {
+                <li>{{ b }}</li>
+              }
+            </ul>
+          }
+        }
       } @else {
-        <span class="ats-muted">Agrega tus skills (mín. 3)</span>
+        <p class="ats-line ats-muted">Agrega experiencia real</p>
       }
-    </p>
+    </button>
+
+    <button type="button" class="ats-jump" (click)="jumpToStep.emit(3)">
+      <h4>PROYECTOS</h4>
+      @for (proj of hv.profile().projects; track proj.id) {
+        @if (proj.nombre.trim() || proj.descripcion.trim()) {
+          <p class="ats-strong">{{ proj.nombre || 'Proyecto' }}</p>
+          @if (proj.descripcion) {
+            <p class="ats-line">{{ proj.descripcion }}</p>
+          }
+          @if (proj.tecnologias) {
+            <p class="ats-line">Tech: {{ proj.tecnologias }}</p>
+          }
+        }
+      } @empty {
+        <p class="ats-line ats-muted">Opcional: proyectos académicos</p>
+      }
+
+      @if (hv.profile().languages.length) {
+        <h4>IDIOMAS</h4>
+        <p class="ats-line">{{ hv.profile().languages.join(' · ') }}</p>
+      }
+    </button>
+
+    <button type="button" class="ats-jump" (click)="jumpToStep.emit(4)">
+      <h4>SKILLS</h4>
+      <p class="ats-line">
+        @if (hv.profile().skills.length) {
+          {{ hv.profile().skills.join(' · ') }}
+        } @else {
+          <span class="ats-muted">Agrega tus skills (mín. 3)</span>
+        }
+      </p>
+    </button>
   </article>
   <p class="ats-preview-note">
-    Formato limpio para ATS · sin inventos · la adaptación por oferta usa solo este contenido.
+    Haz clic en una sección para editarla · formato ATS limpio · sin inventos.
   </p>
 </aside>

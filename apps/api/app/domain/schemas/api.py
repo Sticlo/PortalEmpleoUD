@@ -22,6 +22,20 @@ class OfferListResponse(BaseModel):
     )
 
 
+class TodayJobsResponse(BaseModel):
+    """Carrusel institucional: ofertas reales multi-carrera ≤24 h (portales + link)."""
+
+    day: str = Field(..., examples=["2026-08-05"], description="Fecha Colombia (YYYY-MM-DD)")
+    title: str = "Empleos de hoy"
+    count: int
+    offers: List[Offer]
+    programs_covered: List[str] = Field(default_factory=list)
+    note: str = (
+        "Ofertas reales de Computrabajo, Elempleo y LinkedIn. "
+        "Cada tarjeta incluye portal y URL original. Cache diario."
+    )
+
+
 class OfferCreateResponse(BaseModel):
     ok: bool = True
     id: str
@@ -98,7 +112,36 @@ class AdaptCvResponse(BaseModel):
     cv_text: str
     notes: str = Field(
         default="",
-        description="Qué se enfatizó / qué requisitos no cubre el perfil",
+        description="Resumen narrativo del Ojo (afinidades + gaps)",
+    )
+    affinity_score: int = Field(
+        default=50,
+        ge=0,
+        le=100,
+        description="Afinidad 0–100 entre HV y oferta (sin inventar)",
+        examples=[78],
+    )
+    matched_skills: List[str] = Field(
+        default_factory=list,
+        description="Skills del perfil que sí aparecen en la oferta",
+    )
+    missing_skills: List[str] = Field(
+        default_factory=list,
+        description="Requisitos de la oferta que NO están en la HV",
+    )
+    strengths: List[str] = Field(
+        default_factory=list,
+        description="Puntos fuertes reales a enfatizar al postular",
+    )
+    provider: str = Field(
+        default="local",
+        description="Quién generó el CV: deepseek | local",
+        examples=["deepseek"],
+    )
+    model: Optional[str] = Field(
+        default=None,
+        description="Modelo usado cuando provider=deepseek",
+        examples=["deepseek-v4-flash"],
     )
 
 

@@ -10,12 +10,54 @@
       (search)="runSearch($event)"
     />
 
+    @if (!showResults() && !scanning()) {
+      <section class="today-board" aria-labelledby="today-heading">
+        <header class="today-head">
+          <div>
+            <p class="today-kicker">Portales reales · ≤24 h</p>
+            <h2 id="today-heading">Empleos de hoy</h2>
+            <p class="today-sub">
+              @if (store.loadingToday()) {
+                Buscando en Computrabajo, Elempleo y LinkedIn por carrera…
+              } @else {
+                {{ store.todayCount() }} ofertas con portal + link
+                @if (store.todayDay()) {
+                  · {{ store.todayDay() }}
+                }
+              }
+            </p>
+            @if (store.todayPrograms().length) {
+              <p class="today-programs">{{ store.todayPrograms().join(' · ') }}</p>
+            }
+          </div>
+        </header>
+
+        @if (store.loadingToday()) {
+          <div class="today-loading" role="status">
+            <span class="offers-spinner" aria-hidden="true"></span>
+            <p>Esto puede tardar un minuto la primera vez del día (luego queda en cache).</p>
+          </div>
+        } @else if (store.todayCount() === 0) {
+          <p class="offers-empty">
+            Hoy no hubo ofertas frescas con link en los portales para estas carreras.
+            Prueba el buscador de arriba o vuelve más tarde.
+          </p>
+        } @else {
+          <div class="offer-grid">
+            @for (offer of store.todayCards(); track offer.id; let i = $index) {
+              <app-offer-card [offer]="offer" [index]="i" (prepare)="prepareCv($event)" />
+            }
+          </div>
+        }
+      </section>
+    }
+
     @if (!scanning() && showResults()) {
       <div class="offers-meta">
         <p>
           <strong>{{ store.count() }}</strong>
           {{ store.count() === 1 ? 'oferta' : 'ofertas' }}
-          · ≤24 h · Bogotá
+          del radar · ≤24 h · Bogotá
           @if (store.lastQuery()) {
             · {{ store.lastQuery() }}
           }

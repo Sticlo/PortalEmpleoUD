@@ -3,19 +3,154 @@
     @if (loading() || adapting()) {
       <header class="page-head">
         <a routerLink="/ofertas" class="back">← Volver a ofertas</a>
-        <h1>{{ adapting() ? 'Adaptando tu HV a la oferta…' : 'Cargando oferta…' }}</h1>
-        <p>Solo usamos lo que declaraste. Nada inventado.</p>
+        <h1>{{ adapting() ? 'Preparando tu HV para esta oferta…' : 'Cargando oferta…' }}</h1>
       </header>
+      <div class="today-loading" role="status">
+        <span class="offers-spinner" aria-hidden="true"></span>
+        <p>Armando preview ATS…</p>
+      </div>
     } @else if (offer(); as o) {
-      <app-cv-result
-        [offer]="o"
-        [profile]="hv.profile()"
-        [cvText]="cvText()"
-        [cvNotes]="cvNotes()"
-        [adaptedWithAi]="adaptedWithAi()"
-        (copy)="copy()"
-        (done)="done()"
-      />
+      <header class="page-head">
+        <a routerLink="/ofertas" class="back">← Volver a ofertas</a>
+        <h1>Tu HV para esta oferta</h1>
+        <p>
+          Previsualiza, descarga y postúlate. Adaptada a
+          <strong>{{ o.title }}</strong>
+          @if (o.company) {
+            · {{ o.company }}
+          }
+        </p>
+      </header>
+
+      <ol class="cv-flow" aria-label="Pasos para postularte">
+        <li class="cv-flow-item is-done"><span>1</span> Revisar preview</li>
+        <li class="cv-flow-item"><span>2</span> Descargar PDF</li>
+        <li class="cv-flow-item"><span>3</span> Postular en el portal</li>
+      </ol>
+
+      <aside class="cv-offer-chip">
+        <div>
+          <p class="cv-offer-kicker">Oferta objetivo</p>
+          <p class="cv-offer-title">{{ o.title }}</p>
+          <p class="cv-offer-meta">
+            {{ o.company }} · {{ o.city }} · {{ o.modalityLabel }}
+            @if (o.source) {
+              · {{ o.source }}
+            }
+          </p>
+        </div>
+        @if (o.url) {
+          <a class="btn-outline btn-sm" [href]="o.url" target="_blank" rel="noopener noreferrer">
+            Ver oferta
+          </a>
+        }
+      </aside>
+
+      <div class="cv-eye" role="status">
+        <div class="cv-eye-head">
+          <div>
+            <p class="cv-eye-kicker">Tu ventaja RutaUD</p>
+            <h2 class="cv-eye-title">Ojo</h2>
+          </div>
+          <div class="cv-aff" [class]="affinityClass()">
+            <span class="cv-aff-score">{{ affinity() }}%</span>
+            <span class="cv-aff-label">afinidad {{ affinityLabel() }}</span>
+          </div>
+        </div>
+
+        <div class="cv-aff-bar" aria-hidden="true">
+          <span [style.width.%]="affinity()"></span>
+        </div>
+
+        <p class="cv-eye-notes">{{ eyeNote() }}</p>
+
+        @if (strengths().length) {
+          <div class="cv-eye-block">
+            <h3>Por qué sí encajas</h3>
+            <ul>
+              @for (s of strengths(); track s) {
+                <li>{{ s }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (matchedSkills().length) {
+          <div class="cv-eye-block">
+            <h3>Skills con match</h3>
+            <div class="cv-eye-chips">
+              @for (s of matchedSkills(); track s) {
+                <span class="cv-chip cv-chip--ok">{{ s }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (missingSkills().length) {
+          <div class="cv-eye-block">
+            <h3>Te falta (no lo inventamos en el CV)</h3>
+            <div class="cv-eye-chips">
+              @for (s of missingSkills(); track s) {
+                <span class="cv-chip cv-chip--miss">{{ s }}</span>
+              }
+            </div>
+            <p class="cv-eye-tip">
+              Si sí los dominas, agrégalos en <a routerLink="/hoja-de-vida">Mi hoja de vida</a> y vuelve a preparar el CV.
+              Si no, sé transparente: el Ojo existe para que no te pillen inventando.
+            </p>
+          </div>
+        } @else if (affinity() >= 60) {
+          <p class="cv-eye-tip cv-eye-tip--ok">
+            No vimos gaps críticos. Enfatiza tus skills con match al postular.
+          </p>
+        }
+      </div>
+
+      <div class="cv-paper-wrap">
+        <div class="cv-paper-bar">
+          <span>Vista previa ATS</span>
+          <button type="button" class="btn-ghost btn-sm" (click)="toggleEdit()">
+            {{ editing() ? 'Ver preview' : 'Editar texto' }}
+          </button>
+        </div>
+
+        @if (editing()) {
+          <label class="cv-edit-label" for="cv-body-edit">Edita tu HV antes de descargar el PDF</label>
+          <textarea
+            id="cv-body-edit"
+            class="cv-body-edit"
+            rows="20"
+            [ngModel]="draftDoc()"
+            (ngModelChange)="draftDoc.set($event)"
+            name="cvBodyEdit"
+          ></textarea>
+        } @else {
+          <article class="cv-paper" aria-label="Hoja de vida adaptada">
+            <pre class="cv-paper-body">{{ fullDocument() }}</pre>
+          </article>
+        }
+      </div>
+
+      <div class="cv-actions">
+        <button type="button" class="btn-outline" (click)="download()">Descargar PDF</button>
+        @if (o.url) {
+          <a class="btn-main" [href]="o.url" target="_blank" rel="noopener noreferrer">
+            Ir a postularme
+          </a>
+        } @else {
+          <button type="button" class="btn-main" (click)="done()">Listo, volver a ofertas</button>
+        }
+      </div>
+
+      @if (o.url) {
+        <p class="cv-apply-hint">
+          Tip: descarga el PDF, adjúntalo en el portal y postúlate con
+          <a [href]="o.url" target="_blank" rel="noopener noreferrer">este enlace</a>.
+        </p>
+        <div class="cv-actions cv-actions--secondary">
+          <button type="button" class="btn-ghost" (click)="done()">Volver a ofertas</button>
+        </div>
+      }
     } @else {
       <header class="page-head">
         <a routerLink="/ofertas" class="back">← Volver a ofertas</a>

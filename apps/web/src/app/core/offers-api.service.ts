@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiOffer, OfferListResponse, ScrapeResponse } from './models/offer';
+import { ApiOffer, OfferListResponse, ScrapeResponse, TodayJobsResponse } from './models/offer';
 
 @Injectable({ providedIn: 'root' })
 export class OffersApiService {
@@ -20,6 +20,10 @@ export class OffersApiService {
     return this.http.get<OfferListResponse>(`${this.base}/offers`, {
       params: { city, max_age_hours: maxAgeHours },
     });
+  }
+
+  today(): Observable<TodayJobsResponse> {
+    return this.http.get<TodayJobsResponse>(`${this.base}/offers/today`);
   }
 
   getById(id: string): Observable<ApiOffer> {

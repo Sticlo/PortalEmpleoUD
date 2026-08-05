@@ -4,8 +4,8 @@
       <p class="hv-kicker">Tu ventaja frente a otros portales</p>
       <h1>Arma tu hoja de vida ATS</h1>
       <p>
-        Una sola HV real. RutaUD la adapta a cada oferta <strong>sin inventar experiencia</strong>:
-        solo reordena y enfatiza lo que tú declaraste.
+        Una sola HV real y 100% editable. RutaUD la adapta a cada oferta
+        <strong>sin inventar experiencia</strong>: solo reordena y enfatiza lo que tú declaraste.
       </p>
     </header>
 
@@ -54,9 +54,10 @@
             (next)="next()"
             (prev)="prev()"
             (save)="save()"
+            (download)="downloadAts()"
           />
         </div>
-        <app-ats-preview />
+        <app-ats-preview (jumpToStep)="setStep($event)" />
       </div>
     </div>
   </div>

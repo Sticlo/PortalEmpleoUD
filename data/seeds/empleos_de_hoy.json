@@ -1,0 +1,186 @@
+{
+  "title": "Empleos de hoy · RutaUD",
+  "city": "Bogotá",
+  "pool": [
+    {
+      "slug": "civil-residente",
+      "title": "Residente de obra civil (practicante)",
+      "company": "Constructora Andes Sur",
+      "modality": "presencial",
+      "salary": "$1.400.000 (Mensual)",
+      "program_slug": "ingenieria-civil",
+      "program_label": "Ingeniería Civil",
+      "description": "Apoyo en supervisión de obra, control de avance, bitácoras y coordinación con contratistas. Preferible semestre ≥7. Bogotá (norte)."
+    },
+    {
+      "slug": "civil-estructuras",
+      "title": "Auxiliar de diseño estructural",
+      "company": "Estudio Estructural Nova",
+      "modality": "hibrido",
+      "salary": "$1.600.000 (Mensual)",
+      "program_slug": "ingenieria-civil",
+      "program_label": "Ingeniería Civil",
+      "description": "Modelado básico en software estructural, planos y memorias de cálculo bajo supervisión. Manejo de AutoCAD y Excel."
+    },
+    {
+      "slug": "sistemas-backend",
+      "title": "Practicante Backend (Python / APIs)",
+      "company": "NexPay Fintech",
+      "modality": "hibrido",
+      "salary": "$1.500.000 (Mensual)",
+      "program_slug": "ingenieria-de-sistemas",
+      "program_label": "Ingeniería de Sistemas",
+      "description": "Desarrollo de APIs REST, pruebas y documentación. Stack: Python, Git, SQL. Ideal para estudiantes UD con proyectos académicos."
+    },
+    {
+      "slug": "sistemas-qa",
+      "title": "Practicante QA / pruebas de software",
+      "company": "SoftAndina",
+      "modality": "remoto",
+      "salary": "$1.300.000 (Mensual)",
+      "program_slug": "ingenieria-de-sistemas",
+      "program_label": "Ingeniería de Sistemas",
+      "description": "Casos de prueba, reportes de bugs y apoyo en automatización básica. Se valora curiosidad y lectura de requisitos."
+    },
+    {
+      "slug": "sistemas-datos",
+      "title": "Auxiliar de analítica de datos",
+      "company": "DataCalle Analytics",
+      "modality": "hibrido",
+      "salary": "A convenir",
+      "program_slug": "ingenieria-de-sistemas",
+      "program_label": "Ingeniería de Sistemas",
+      "description": "Limpieza de datos, tableros y reportes. Excel avanzado, Python o SQL son un plus. Bogotá."
+    },
+    {
+      "slug": "electronica-iot",
+      "title": "Practicante IoT / electrónica embebida",
+      "company": "Sensores del Sur",
+      "modality": "presencial",
+      "salary": "$1.450.000 (Mensual)",
+      "program_slug": "ingenieria-electronica",
+      "program_label": "Ingeniería Electrónica",
+      "description": "Prototipos con microcontroladores, sensores y documentación técnica. Preferible Arduino/ESP32 y lectura de esquemáticos."
+    },
+    {
+      "slug": "electronica-mantenimiento",
+      "title": "Auxiliar de mantenimiento electrónico",
+      "company": "Industrias Voltaje",
+      "modality": "presencial",
+      "salary": "$1.350.000 (Mensual)",
+      "program_slug": "ingenieria-electronica",
+      "program_label": "Ingeniería Electrónica",
+      "description": "Diagnóstico básico de tarjetas, inventario de repuestos y apoyo en planta. Turno diurno, Bogotá industrial."
+    },
+    {
+      "slug": "forestal-campo",
+      "title": "Practicante de restauración ecológica",
+      "company": "Fundación Bosque Vivo",
+      "modality": "presencial",
+      "salary": "$1.200.000 (Mensual)",
+      "program_slug": "ingenieria-forestal",
+      "program_label": "Ingeniería Forestal",
+      "description": "Salidas de campo, inventarios forestales y apoyo en viveros. Disponibilidad para desplazamientos en Cundinamarca."
+    },
+    {
+      "slug": "forestal-sig",
+      "title": "Auxiliar SIG / cartografía forestal",
+      "company": "GeoVerde Consultores",
+      "modality": "hibrido",
+      "salary": "$1.400.000 (Mensual)",
+      "program_slug": "ingenieria-forestal",
+      "program_label": "Ingeniería Forestal",
+      "description": "Capas GIS, digitalización y reportes ambientales. QGIS o ArcGIS deseable."
+    },
+    {
+      "slug": "quimica-lab",
+      "title": "Practicante de laboratorio químico",
+      "company": "Laboratorios Andinos",
+      "modality": "presencial",
+      "salary": "$1.380.000 (Mensual)",
+      "program_slug": "ingenieria-quimica",
+      "program_label": "Ingeniería Química",
+      "description": "Análisis de rutina, preparación de muestras y buenas prácticas de laboratorio (BPL). EPP obligatorio."
+    },
+    {
+      "slug": "quimica-procesos",
+      "title": "Auxiliar de procesos químicos",
+      "company": "Química del Altiplano",
+      "modality": "presencial",
+      "salary": "$1.500.000 (Mensual)",
+      "program_slug": "ingenieria-quimica",
+      "program_label": "Ingeniería Química",
+      "description": "Seguimiento de lotes, balances básicos y apoyo a ingenieros de planta. Interés en seguridad industrial."
+    },
+    {
+      "slug": "artes-taller",
+      "title": "Asistente de taller artístico / mediación",
+      "company": "Casa Cultural La Candelaria",
+      "modality": "presencial",
+      "salary": "$1.100.000 (Mensual)",
+      "program_slug": "licenciatura-en-artes",
+      "program_label": "Licenciatura en Artes",
+      "description": "Apoyo en talleres abiertos, montaje de exposiciones y mediación con público escolar. Perfil creativo y puntual."
+    },
+    {
+      "slug": "artes-educacion",
+      "title": "Practicante de educación artística",
+      "company": "Colegio Artes del Centro",
+      "modality": "presencial",
+      "salary": "$1.250.000 (Mensual)",
+      "program_slug": "licenciatura-en-artes",
+      "program_label": "Licenciatura en Artes",
+      "description": "Acompañamiento en clases de artes plásticas, preparación de materiales y registro fotográfico de procesos."
+    },
+    {
+      "slug": "industrial-logistica",
+      "title": "Practicante de logística / mejora continua",
+      "company": "Distribuciones Capital",
+      "modality": "hibrido",
+      "salary": "$1.400.000 (Mensual)",
+      "program_slug": "ingenieria-industrial",
+      "program_label": "Ingeniería Industrial",
+      "description": "Indicadores de bodega, 5S y apoyo en planeación de rutas. Excel y ganas de aprender lean."
+    },
+    {
+      "slug": "ambiental-campo",
+      "title": "Practicante ambiental (monitoreo)",
+      "company": "EcoMedición Bogotá",
+      "modality": "presencial",
+      "salary": "$1.300.000 (Mensual)",
+      "program_slug": "ingenieria-ambiental",
+      "program_label": "Ingeniería Ambiental",
+      "description": "Muestreos, formatos de campo y apoyo en informes de impacto. Disponibilidad matutina."
+    },
+    {
+      "slug": "catastral-sig",
+      "title": "Auxiliar catastral / topografía",
+      "company": "GeoLotes Bogotá",
+      "modality": "presencial",
+      "salary": "$1.350.000 (Mensual)",
+      "program_slug": "ingenieria-catastral",
+      "program_label": "Ingeniería Catastral",
+      "description": "Apoyo en levantamientos, digitalización predial y verificación en campo. Interés en normativa urbana."
+    },
+    {
+      "slug": "telecomunicaciones",
+      "title": "Practicante de redes / telecomunicaciones",
+      "company": "RedConecta SAS",
+      "modality": "hibrido",
+      "salary": "$1.420.000 (Mensual)",
+      "program_slug": "ingenieria-telecomunicaciones",
+      "program_label": "Ingeniería en Telecomunicaciones",
+      "description": "Soporte a instalaciones, inventario de equipos y documentación de enlaces. Fundamentos de redes."
+    },
+    {
+      "slug": "mecanica-taller",
+      "title": "Practicante de diseño mecánico",
+      "company": "Metalúrgica Capital",
+      "modality": "presencial",
+      "salary": "$1.400.000 (Mensual)",
+      "program_slug": "ingenieria-mecanica",
+      "program_label": "Ingeniería Mecánica",
+      "description": "CAD 3D, planos de taller y seguimiento de prototipos. SolidWorks o Inventor deseable."
+    }
+  ]
+}

@@ -3,10 +3,6 @@
     <header class="page-head">
       <p class="hv-kicker">Espacio empresas</p>
       <h1>Publicar oferta</h1>
-      <p>
-        Canal directo con talento UD. Por ahora sin login — luego autenticación y multi-tenant.
-        La vacante vive <strong>24 horas</strong> en el radar.
-      </p>
     </header>
 
     @if (publishedId(); as id) {
@@ -59,8 +55,12 @@
           <span>Carrera UD a la que apunta</span>
           <select name="program_slug" [(ngModel)]="form.program_slug">
             <option value="ingenieria-de-sistemas">Ingeniería de Sistemas</option>
+            <option value="ingenieria-civil">Ingeniería Civil</option>
             <option value="ingenieria-electronica">Ingeniería Electrónica</option>
+            <option value="ingenieria-forestal">Ingeniería Forestal</option>
+            <option value="ingenieria-quimica">Ingeniería Química</option>
             <option value="ingenieria-industrial">Ingeniería Industrial</option>
+            <option value="licenciatura-en-artes">Licenciatura en Artes</option>
             <option value="otra">Otra carrera UD</option>
           </select>
         </label>

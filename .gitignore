@@ -19,3 +19,4 @@ build/
 data/cache/
 data/*.json
 !data/seeds/
+!data/seeds/**
