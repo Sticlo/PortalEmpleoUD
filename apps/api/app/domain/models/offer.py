@@ -18,3 +18,9 @@ class Offer(BaseModel):
     description: str = ""
     salary: Optional[str] = None
     program_tags: List[str] = Field(default_factory=list)
+    # Conteo público de postulantes cuando el portal lo muestra (LinkedIn a veces).
+    # Computrabajo/Elempleo casi nunca lo publican sin cuenta empresa → None.
+    applicants: Optional[int] = Field(
+        default=None,
+        description="Postulantes reportados por el portal, si es público",
+    )

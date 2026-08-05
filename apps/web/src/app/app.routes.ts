@@ -27,6 +27,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/empresa/empresa.routes').then((m) => m.EMPRESA_ROUTES),
       },
+      {
+        // Sección administrativa (piloto sin auth; luego rol/guard o se oculta del nav)
+        path: 'admin/mercado',
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

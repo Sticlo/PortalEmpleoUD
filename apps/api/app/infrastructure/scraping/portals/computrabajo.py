@@ -48,16 +48,25 @@ def slugify_keyword(query: str) -> str:
     return text or "desarrollador"
 
 
-def build_search_url(query: str, city: str = "Bogotá", today_only: bool = True) -> str:
+def build_search_url(
+    query: str,
+    city: str = "Bogotá",
+    max_age_hours: int = 24,
+) -> str:
+    """pubdate: 1=hoy, 3≈3 días, 7≈semana (más data para métricas de mercado)."""
     keyword = slugify_keyword(query)
     city_slug = slugify_keyword(city.replace("á", "a").replace("Á", "a"))
     if city_slug in ("bogota", "bogota-dc", "bogota-d-c"):
         city_slug = "bogota"
     path = f"/trabajo-de-{keyword}-en-{city_slug}"
     url = urljoin(BASE_URL, path)
-    if today_only:
-        url = f"{url}?pubdate=1"
-    return url
+    if max_age_hours <= 24:
+        pubdate = 1
+    elif max_age_hours <= 72:
+        pubdate = 3
+    else:
+        pubdate = 7
+    return f"{url}?pubdate={pubdate}"
 
 
 def parse_relative_age(text: str, now: Optional[datetime] = None) -> Optional[datetime]:
@@ -125,7 +134,7 @@ class ComputrabajoScraper(BasePortalScraper):
         query: str = "",
     ) -> List[Offer]:
         query = (query or "desarrollador").strip()
-        url = build_search_url(query, city=city, today_only=True)
+        url = build_search_url(query, city=city, max_age_hours=max_age_hours)
         log.info("Computrabajo GET %s", url)
 
         human_delay(0.8, 1.8)
@@ -251,9 +260,9 @@ class ComputrabajoScraper(BasePortalScraper):
                     and not p.lower().startswith("palabras clave")
                     and "competencias añadidas" not in p.lower()
                 ]
-                snippet = " ".join(paras[:2]).strip()
-                if len(snippet) > 420:
-                    snippet = snippet[:417].rsplit(" ", 1)[0] + "…"
+                snippet = " ".join(paras[:4]).strip()
+                if len(snippet) > 900:
+                    snippet = snippet[:897].rsplit(" ", 1)[0] + "…"
                 return offer.id, snippet
             except Exception as e:
                 log.debug("Detalle %s falló: %s", offer.id, e)

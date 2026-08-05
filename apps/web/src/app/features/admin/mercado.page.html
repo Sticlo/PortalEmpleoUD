@@ -1,0 +1,219 @@
+<div class="page page--wide admin-dash">
+  <header class="page-head">
+    <h1>Métricas de mercado laboral</h1>
+    <p>
+      Demanda real observada en Computrabajo, Elempleo y LinkedIn. Sirve para orientar
+      cursos cortos y revisión
+    </p>
+  </header>
+
+  <div class="admin-controls">
+    <span>Ventana:</span>
+    <button type="button" class="btn-outline btn-sm" [class.admin-range--on]="days() === 7" (click)="load(7)">
+      7 días
+    </button>
+    <button type="button" class="btn-outline btn-sm" [class.admin-range--on]="days() === 30" (click)="load(30)">
+      30 días
+    </button>
+    <button type="button" class="btn-outline btn-sm" [class.admin-range--on]="days() === 90" (click)="load(90)">
+      90 días
+    </button>
+    <button
+      type="button"
+      class="btn-main btn-sm"
+      (click)="refreshMarket()"
+      [disabled]="refreshing()"
+    >
+      {{ refreshing() ? 'Actualizando…' : 'Actualizar datos del mercado' }}
+    </button>
+  </div>
+
+  @if (toast()) {
+    <p class="admin-toast">{{ toast() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="admin-loading">Analizando el histórico de vacantes…</p>
+  } @else if (error()) {
+    <p class="admin-error">{{ error() }}</p>
+  } @else if (stats(); as s) {
+    <section class="admin-insight">
+      <span class="admin-eye" aria-hidden="true">👁</span>
+      <p>{{ s.insight }}</p>
+    </section>
+
+    <p class="admin-disclaimer">{{ s.applicants_disclaimer }}</p>
+
+    <section class="admin-kpis">
+      <div class="admin-kpi admin-kpi--accent">
+        <strong>{{ s.total_offers }}</strong>
+        <span>vacantes analizadas ({{ s.days }} días)</span>
+      </div>
+      <div class="admin-kpi">
+        <strong>{{ s.archive_total }}</strong>
+        <span>histórico acumulado</span>
+      </div>
+      <div class="admin-kpi">
+        <strong>{{ s.salary_disclosed_percent }}%</strong>
+        <span>publican salario</span>
+      </div>
+      <div class="admin-kpi">
+        <strong>
+          @if (s.competition.avg_applicants != null) {
+            {{ s.competition.avg_applicants }}
+          } @else {
+            —
+          }
+        </strong>
+        <span>
+          postulantes promedio
+          @if (s.competition.offers_with_applicants) {
+            ({{ s.competition.offers_with_applicants }} vacantes)
+          } @else {
+            (no público)
+          }
+        </span>
+      </div>
+    </section>
+
+    <!-- Skills hero chart -->
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel-head">
+        <div>
+          <h2>Skills más solicitadas</h2>
+          <p class="admin-panel-sub">Hover en cada barra · clic en una skill abajo para ver ejemplos reales</p>
+        </div>
+      </div>
+      @if (!s.top_skills.length) {
+        <p class="admin-empty">
+          Poca data aún. Pulsa <strong>Actualizar datos del mercado</strong>.
+        </p>
+      } @else {
+        <app-market-chart
+          type="bar"
+          [config]="skillsBar()!"
+          [options]="barOpts"
+          [height]="320"
+        />
+        <div class="skill-chips">
+          @for (skill of s.top_skills.slice(0, 12); track skill.skill) {
+            <button
+              type="button"
+              class="skill-chip"
+              [class.skill-chip--on]="selectedSkill()?.skill === skill.skill"
+              (click)="pickSkill(skill)"
+            >
+              {{ skill.skill }}
+              <em>{{ skill.count }}</em>
+              <span class="skill-trend" [class]="'skill-trend--' + skill.trend">
+                {{ trendLabel(skill.trend) }}
+              </span>
+            </button>
+          }
+        </div>
+        @if (selectedSkill(); as sk) {
+          <div class="skill-detail">
+            <h3>{{ sk.skill }} · {{ sk.count }} vacantes ({{ sk.percent }}%)</h3>
+            @if (sk.samples.length) {
+              <ul class="skill-samples">
+                @for (sample of sk.samples; track sample.title + sample.company) {
+                  <li>
+                    <strong>{{ sample.title }}</strong>
+                    <span>{{ sample.company }} · {{ sample.source }}</span>
+                    @if (sample.salary) {
+                      <em>{{ sample.salary }}</em>
+                    }
+                    @if (sample.applicants) {
+                      <em>{{ sample.applicants }} postulantes</em>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="admin-hint">Sin ejemplos detallados en esta skill.</p>
+            }
+          </div>
+        }
+      }
+    </section>
+
+    <!-- Donuts row -->
+    <div class="admin-charts-3">
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Por carrera UD</h2>
+        </div>
+        <app-market-chart type="doughnut" [config]="programDonut()!" [options]="donutOpts" [height]="260" />
+      </section>
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Modalidad</h2>
+        </div>
+        <app-market-chart type="doughnut" [config]="modalityDonut()!" [options]="donutOpts" [height]="260" />
+      </section>
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Portal de origen</h2>
+        </div>
+        <app-market-chart type="doughnut" [config]="sourceDonut()!" [options]="donutOpts" [height]="260" />
+      </section>
+    </div>
+
+    <div class="admin-charts-2">
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Empresas que más publican</h2>
+        </div>
+        <app-market-chart type="bar" [config]="companiesBar()!" [options]="hBarOpts" [height]="300" />
+      </section>
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Nivel / seniority</h2>
+        </div>
+        <app-market-chart type="doughnut" [config]="seniorityDonut()!" [options]="donutOpts" [height]="300" />
+      </section>
+    </div>
+
+    <div class="admin-charts-2">
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Cargos más frecuentes</h2>
+        </div>
+        <app-market-chart type="bar" [config]="titlesBar()!" [options]="hBarOpts" [height]="320" />
+      </section>
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Bandas salariales</h2>
+          <p class="admin-panel-sub">Solo vacantes que publican sueldo</p>
+        </div>
+        @if (!s.salary_bands.length) {
+          <div class="admin-empty-visual">
+            <strong>Pocas vacantes con salario visible</strong>
+            <p>Los portales suelen ocultarlo. Al actualizar el mercado, si aparece, se grafica aquí.</p>
+          </div>
+        } @else {
+          <app-market-chart type="bar" [config]="salaryBar()!" [options]="barOpts" [height]="280" />
+        }
+      </section>
+    </div>
+
+    <section class="admin-panel">
+      <div class="admin-panel-head">
+        <div>
+          <h2>Skills poco pedidas (en esta muestra)</h2>
+          <p class="admin-panel-sub">Útil para no invertir en cursos sin demanda observada</p>
+        </div>
+      </div>
+      <app-market-chart type="bar" [config]="lowSkillsBar()!" [options]="hBarOpts" [height]="260" />
+    </section>
+
+    @if (s.competition.note) {
+      <p class="admin-comp-note">{{ s.competition.note }}</p>
+    }
+
+    <p class="admin-note">
+      Tip demo: pulsa «Actualizar datos del mercado» antes de mostrar esto al coordinador.
+      Cada scrape suma al histórico; con semanas de uso las tendencias ▲▼ se vuelven sólidas.
+    </p>
+  }
+</div>

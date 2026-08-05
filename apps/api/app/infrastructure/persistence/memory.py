@@ -31,6 +31,13 @@ def get_offer(offer_id: str) -> Optional[Offer]:
 
 def add_offer(offer: Offer) -> Offer:
     _OFFERS[offer.id] = offer
+    # Historial para métricas de mercado (no se purga a las 24 h)
+    try:
+        from app.infrastructure.persistence.offer_archive import archive_offer
+
+        archive_offer(offer)
+    except Exception:  # el archivo nunca debe romper el flujo principal
+        pass
     return offer
 
 

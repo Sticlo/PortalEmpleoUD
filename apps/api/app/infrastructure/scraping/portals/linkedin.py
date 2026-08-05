@@ -307,7 +307,7 @@ class LinkedInScraper(BasePortalScraper):
 
         by_jid = {jid: offer for offer, jid in pairs}
 
-        def fetch_one(job_id: str) -> Tuple[str, str]:
+        def fetch_one(job_id: str) -> Tuple[str, str, Optional[int]]:
             try:
                 r = requests.get(
                     f"{GUEST_DETAIL}/{job_id}",
@@ -315,29 +315,61 @@ class LinkedInScraper(BasePortalScraper):
                     timeout=14,
                 )
                 if r.status_code != 200:
-                    return job_id, ""
+                    return job_id, "", None
                 soup = BeautifulSoup(r.text, "html.parser")
                 desc_el = soup.select_one(
                     ".show-more-less-html__markup, .description__text, .description"
                 )
                 snippet = _decode(desc_el.get_text()) if desc_el else ""
-                if len(snippet) > 420:
-                    snippet = snippet[:417].rsplit(" ", 1)[0] + "…"
+                if len(snippet) > 900:
+                    snippet = snippet[:897].rsplit(" ", 1)[0] + "…"
                 criteria = " · ".join(
                     _decode(li.get_text())
                     for li in soup.select("li.description__job-criteria-item")[:3]
                 )
                 if criteria and snippet:
                     snippet = f"{snippet} ({criteria})"
-                return job_id, snippet
+
+                # Postulantes públicos (cuando LinkedIn guest los muestra)
+                applicants: Optional[int] = None
+                page_text = soup.get_text(" ", strip=True)
+                m = re.search(
+                    r"(?:Be among the first|Sé de los primeros)\s+(\d+)\s+applicant",
+                    page_text,
+                    re.I,
+                )
+                if m:
+                    applicants = int(m.group(1))
+                else:
+                    m = re.search(r"Over\s+(\d[\d,]*)\s+applicant", page_text, re.I)
+                    if m:
+                        applicants = int(m.group(1).replace(",", ""))
+                    else:
+                        m = re.search(r"(\d[\d,]*)\s+applicant", page_text, re.I)
+                        if m:
+                            applicants = int(m.group(1).replace(",", ""))
+                        else:
+                            m = re.search(
+                                r"(\d[\d.]*)\s+candidat",
+                                page_text,
+                                re.I,
+                            )
+                            if m:
+                                applicants = int(m.group(1).replace(".", ""))
+
+                return job_id, snippet, applicants
             except Exception as e:
                 log.debug("LinkedIn detail %s: %s", job_id, e)
-                return job_id, ""
+                return job_id, "", None
 
         with ThreadPoolExecutor(max_workers=5) as pool:
             futs = [pool.submit(fetch_one, jid) for jid in by_jid]
             for fut in as_completed(futs):
-                jid, snippet = fut.result()
+                jid, snippet, applicants = fut.result()
                 offer = by_jid.get(jid)
-                if offer and snippet:
+                if not offer:
+                    continue
+                if snippet:
                     offer.description = snippet
+                if applicants is not None:
+                    offer.applicants = applicants
