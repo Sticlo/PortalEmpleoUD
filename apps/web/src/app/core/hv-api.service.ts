@@ -43,6 +43,30 @@ const PROGRAM_SLUG: Record<string, string> = {
   'Licenciatura en Artes': 'licenciatura-en-artes',
 };
 
+function programSlugFromCarrera(carrera: string): string {
+  const exact = PROGRAM_SLUG[carrera.trim()];
+  if (exact) return exact;
+  const c = carrera.toLowerCase();
+  if (/civil/.test(c)) return 'ingenieria-civil';
+  if (/electr/.test(c)) return 'ingenieria-electronica';
+  if (/forestal|ambiental/.test(c)) return 'ingenieria-forestal';
+  if (/qu[ií]mic/.test(c)) return 'ingenieria-quimica';
+  if (/industrial/.test(c)) return 'ingenieria-industrial';
+  if (/artes/.test(c)) return 'licenciatura-en-artes';
+  if (/sistema|software|datos|telem[aá]tica|inform[aá]tica|computaci/.test(c)) {
+    return 'ingenieria-de-sistemas';
+  }
+  // Carrera libre: slug legible para la API
+  return (
+    c
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 64) || 'otra-carrera-ud'
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class HvApiService {
   private readonly http = inject(HttpClient);
@@ -79,7 +103,7 @@ export class HvApiService {
 
     return {
       full_name: p.nombre.trim(),
-      program_slug: PROGRAM_SLUG[p.carrera] ?? 'ingenieria-de-sistemas',
+      program_slug: programSlugFromCarrera(p.carrera),
       semester: semesterMatch ? Number(semesterMatch[1]) : null,
       email,
       city: p.ciudad || 'Bogotá',
@@ -92,6 +116,7 @@ export class HvApiService {
         p.universidad,
         p.resumen ? `Perfil: ${p.resumen}` : '',
         `Busca: ${p.busca}`,
+        p.direccion ? `Dirección: ${p.direccion}` : '',
         p.linkedin ? `Link: ${p.linkedin}` : '',
         p.telefono ? `Tel: ${p.telefono}` : '',
       ].filter(Boolean),

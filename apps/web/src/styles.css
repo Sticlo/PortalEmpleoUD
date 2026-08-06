@@ -1510,6 +1510,19 @@ textarea {
   font-weight: 700;
 }
 
+.offers-live {
+  color: var(--ud-red);
+  font-weight: 600;
+}
+
+.offers-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ud-muted);
+  max-width: 62ch;
+  line-height: 1.4;
+}
+
 .offers-empty {
   padding: 28px 0;
   color: var(--ud-muted);

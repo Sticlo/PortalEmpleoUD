@@ -71,8 +71,13 @@ export class OfertasPage implements OnInit {
       }
       this.btnLabel.set('Buscar de nuevo');
       this.showResults.set(true);
+      const note = this.store.searchNote();
       this.toast.show(
-        cards.length ? `${cards.length} ofertas encontradas` : 'Sin ofertas nuevas',
+        cards.length
+          ? note.includes('ocupados')
+            ? `${cards.length} del índice (portales ocupados)`
+            : `${cards.length} ofertas encontradas`
+          : note || 'Sin ofertas nuevas',
       );
     } catch (err) {
       console.error('Error scrape ofertas', err);

@@ -57,11 +57,14 @@
         <p>
           <strong>{{ store.count() }}</strong>
           {{ store.count() === 1 ? 'oferta' : 'ofertas' }}
-          del radar · ≤24 h · Bogotá
+          del radar · Bogotá
           @if (store.lastQuery()) {
             · {{ store.lastQuery() }}
           }
         </p>
+        @if (store.searchNote()) {
+          <p class="offers-note">{{ store.searchNote() }}</p>
+        }
       </div>
 
       @if (store.count() === 0) {

@@ -1,13 +1,27 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiOffer, OfferListResponse, ScrapeResponse, TodayJobsResponse } from './models/offer';
+import {
+  ApiOffer,
+  IndexedSearchResponse,
+  OfferListResponse,
+  ScrapeResponse,
+  TodayJobsResponse,
+} from './models/offer';
 
 @Injectable({ providedIn: 'root' })
 export class OffersApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/v1';
 
+  /** Rápido: histórico + memoria. No toca portales. */
+  searchIndexed(query: string, city = 'Bogotá'): Observable<IndexedSearchResponse> {
+    return this.http.get<IndexedSearchResponse>(`${this.base}/offers/search`, {
+      params: { q: query, city, days: 30, limit: 40 },
+    });
+  }
+
+  /** En vivo: cola + caché anti-stampede. */
   scrape(query: string, city = 'Bogotá', maxAgeHours = 24): Observable<ScrapeResponse> {
     return this.http.post<ScrapeResponse>(`${this.base}/scraping/run`, {
       query,

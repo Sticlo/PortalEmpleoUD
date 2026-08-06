@@ -282,23 +282,36 @@ class ComputrabajoScraper(BasePortalScraper):
                     offer.description = f"{prefix}{snippet}".strip()
 
     def _filter_relevance(self, offers: List[Offer], query: str) -> List[Offer]:
-        """Prioriza títulos que contienen la keyword (Computrabajo a veces mezcla)."""
-        tokens = [
+        """Exige términos específicos (ej. químico); 'ingeniero' solo no basta."""
+        raw_tokens = [
             t
             for t in slugify_keyword(query).split("-")
-            if len(t) >= 4 and t not in {"para", "como", "desde", "bogota"}
+            if len(t) >= 3 and t not in {"para", "como", "desde", "bogota", "con", "del"}
         ]
-        if not tokens:
+        generic = {
+            "ingeniero",
+            "ingeniera",
+            "ingenieria",
+            "desarrollador",
+            "desarrolladora",
+            "programador",
+            "analista",
+            "auxiliar",
+            "junior",
+            "senior",
+            "empleo",
+            "trabajo",
+        }
+        required = [t for t in raw_tokens if t not in generic] or raw_tokens
+        if not required:
             return offers
 
-        def score(offer: Offer) -> int:
+        def ok(offer: Offer) -> bool:
             hay = slugify_keyword(f"{offer.title} {offer.description}")
-            return sum(1 for t in tokens if t in hay)
+            return all(t in hay for t in required)
 
-        ranked = sorted(
-            offers,
-            key=lambda o: (score(o), o.published_at.timestamp()),
-            reverse=True,
-        )
-        matched = [o for o in ranked if score(o) > 0]
-        return matched if matched else ranked
+        matched = [o for o in offers if ok(o)]
+        if matched:
+            return matched
+        # Si el portal no trajo nada estricto, no inventar con genéricos
+        return []

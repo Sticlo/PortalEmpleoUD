@@ -15,6 +15,7 @@ from app.domain.filters.blocked_companies import is_blocked_company
 from app.domain.models.offer import Offer
 from app.infrastructure.persistence import memory as store
 from app.infrastructure.persistence.offer_archive import archive_count
+from app.infrastructure.scraping.job_queue import scrape_queue
 from app.infrastructure.scraping.portals.computrabajo import ComputrabajoScraper
 from app.infrastructure.scraping.portals.elempleo import ElempleoScraper
 from app.infrastructure.scraping.portals.linkedin import LinkedInScraper
@@ -57,6 +58,13 @@ class MarketHarvestService:
 
     def harvest(self, max_age_hours: int = 168) -> dict:
         """max_age_hours=168 ≈ 7 días de ventana en portales."""
+        # No compite con scrapes de estudiantes: toma el semáforo global de portales
+        return scrape_queue.run_exclusive_portal(
+            lambda: self._harvest_body(max_age_hours=max_age_hours),
+            timeout=600,
+        )
+
+    def _harvest_body(self, max_age_hours: int = 168) -> dict:
         s = get_settings()
         city = s.default_city
         scrapers = [
@@ -88,8 +96,8 @@ class MarketHarvestService:
                     log.warning("harvest fail %s/%s: %s", scraper.name, query, exc)
             return query, found, errs
 
-        # Parallel por query (cada una corre 3 portales en serie)
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        # Pocas queries en paralelo: ya tenemos el lock global; no saturar anti-bot
+        with ThreadPoolExecutor(max_workers=2) as pool:
             futs = [
                 pool.submit(run_one, slug, label, query)
                 for slug, label, query in MARKET_QUERIES
@@ -124,7 +132,7 @@ class MarketHarvestService:
             "per_query": per_query,
             "errors": errors,
             "note": (
-                "Las ofertas se acumulan en el histórico. "
+                "Harvest bajo cola global de portales (no satura junto a búsquedas de estudiantes). "
                 "Computrabajo/Elempleo no publican # de postulantes sin cuenta empresa; "
                 "LinkedIn a veces sí (campo applicants)."
             ),

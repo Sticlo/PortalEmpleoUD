@@ -21,17 +21,6 @@ export class AtsFormComponent {
   skillDraft = '';
   langDraft = '';
 
-  readonly carreras = [
-    'Ingeniería de Sistemas',
-    'Ingeniería Civil',
-    'Ingeniería Electrónica',
-    'Ingeniería Forestal',
-    'Ingeniería Química',
-    'Ingeniería Industrial',
-    'Licenciatura en Artes',
-    'Otra carrera UD',
-  ];
-
   addSkill(): void {
     const tokens = parseSkillTokens(this.skillDraft);
     if (!tokens.length) return;

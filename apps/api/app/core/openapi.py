@@ -31,8 +31,9 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
     {
         "name": "scraping",
         "description": (
-            "Ejecuta scrapers de portales (Computrabajo, Elempleo, LinkedIn guest). "
-            "LinkedIn: Colombia · últimas 24 h · foco Bogotá/remoto. Bloqueo BairesDev."
+            "Scrapers de portales con cola anti-stampede: caché compartida, "
+            "single-flight y semáforo global (evita que N estudiantes saturen "
+            "Computrabajo/Elempleo/LinkedIn). LinkedIn guest · bloqueo BairesDev."
         ),
     },
     {

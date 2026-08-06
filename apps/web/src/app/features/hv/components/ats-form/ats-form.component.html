@@ -21,10 +21,23 @@
         <span>LinkedIn / portafolio <em>(opcional)</em></span>
         <input type="url" [ngModel]="hv.profile().linkedin" (ngModelChange)="hv.patch({ linkedin: $event })" name="linkedin" placeholder="https://linkedin.com/in/…" />
       </label>
-      <label class="field">
-        <span>Ciudad</span>
-        <input type="text" [ngModel]="hv.profile().ciudad" (ngModelChange)="hv.patch({ ciudad: $event })" name="ciudad" />
-      </label>
+      <div class="ats-row">
+        <label class="field">
+          <span>Ciudad</span>
+          <input type="text" [ngModel]="hv.profile().ciudad" (ngModelChange)="hv.patch({ ciudad: $event })" name="ciudad" autocomplete="address-level2" />
+        </label>
+        <label class="field">
+          <span>Dirección donde vives</span>
+          <input
+            type="text"
+            [ngModel]="hv.profile().direccion"
+            (ngModelChange)="hv.patch({ direccion: $event })"
+            name="direccion"
+            autocomplete="street-address"
+            placeholder="Barrio / dirección"
+          />
+        </label>
+      </div>
       <label class="field">
         <span>¿Qué buscas?</span>
         <div class="choice-row" role="group">
@@ -61,11 +74,14 @@
       </label>
       <label class="field">
         <span>Carrera</span>
-        <select [ngModel]="hv.profile().carrera" (ngModelChange)="hv.patch({ carrera: $event })" name="carrera">
-          @for (c of carreras; track c) {
-            <option [value]="c">{{ c }}</option>
-          }
-        </select>
+        <input
+          type="text"
+          [ngModel]="hv.profile().carrera"
+          (ngModelChange)="hv.patch({ carrera: $event })"
+          name="carrera"
+          placeholder="Ej. Ingeniería de Sistemas, Tecnología en…"
+          autocomplete="organization-title"
+        />
       </label>
       <label class="field">
         <span>Semestre</span>

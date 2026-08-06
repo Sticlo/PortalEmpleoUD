@@ -22,6 +22,17 @@ class OfferListResponse(BaseModel):
     )
 
 
+class IndexedSearchResponse(BaseModel):
+    """Búsqueda rápida sin scrapers — para picos de concurrencia."""
+
+    query: str
+    city: str
+    count: int
+    offers: List[Offer] = Field(default_factory=list)
+    source: str = Field(default="index", description="index | live")
+    note: str = ""
+
+
 class TodayJobsResponse(BaseModel):
     """Carrusel institucional: ofertas reales multi-carrera ≤24 h (portales + link)."""
 
@@ -98,6 +109,22 @@ class ScrapeResponse(BaseModel):
     per_source: Dict[str, int] = Field(default_factory=dict)
     errors: List[ScrapeErrorItem] = Field(default_factory=list)
     offers: List[Offer] = Field(default_factory=list)
+    from_cache: bool = Field(
+        default=False,
+        description="True si se sirvió desde caché compartida (no se re-scrapeó)",
+    )
+    shared_waiters: int = Field(
+        default=0,
+        description="Cuántos requests esperaron el mismo scrape (single-flight)",
+    )
+    queue_position: int = Field(
+        default=0,
+        description="Posición aproximada en la cola de portales (búsquedas distintas)",
+    )
+    queue_note: str = Field(
+        default="",
+        description="Explicación humana de cache / cola / rate limit",
+    )
 
 
 class AdaptCvRequest(BaseModel):

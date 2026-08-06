@@ -13,6 +13,7 @@ OpenAPI JSON: /openapi.json
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.core.config import get_settings
@@ -51,6 +52,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# JSON más liviano en picos (ofertas/métricas)
+app.add_middleware(GZipMiddleware, minimum_size=800)
 
 prefix = settings.api_prefix
 app.include_router(tenants_router, prefix=prefix, tags=["tenants"])

@@ -23,6 +23,8 @@ export interface HvProfile {
   telefono: string;
   linkedin: string;
   ciudad: string;
+  /** Dirección / barrio donde vive (ATS) */
+  direccion: string;
   busca: string;
   /** Perfil profesional corto (2–4 líneas ATS) */
   resumen: string;
@@ -67,6 +69,7 @@ const EMPTY_PROFILE: HvProfile = {
   telefono: '',
   linkedin: '',
   ciudad: 'Bogotá',
+  direccion: '',
   busca: 'Práctica profesional',
   resumen: '',
   universidad: 'Universidad Distrital Francisco José de Caldas',
@@ -120,6 +123,7 @@ function migrateFromV1(raw: Record<string, unknown>): HvProfile {
     email,
     telefono,
     ciudad: String(raw['ciudad'] ?? 'Bogotá'),
+    direccion: String(raw['direccion'] ?? ''),
     busca: String(raw['busca'] ?? 'Práctica profesional'),
     universidad: String(raw['universidad'] ?? EMPTY_PROFILE.universidad),
     carrera: String(raw['carrera'] ?? EMPTY_PROFILE.carrera),
@@ -159,6 +163,7 @@ function normalizeProfile(raw: Partial<HvProfile> & Record<string, unknown>): Hv
   return {
     ...EMPTY_PROFILE,
     ...raw,
+    direccion: String(raw.direccion ?? ''),
     experiences,
     projects,
     languages: Array.isArray(raw.languages) ? [...raw.languages] : [],
@@ -284,7 +289,7 @@ export class HvProfileService {
     if (step === 1) {
       const e: string[] = [];
       if (!p.universidad.trim()) e.push('Indica la universidad');
-      if (!p.carrera.trim()) e.push('Elige tu carrera');
+      if (!p.carrera.trim()) e.push('Escribe el nombre de tu carrera');
       return e;
     }
     if (step === 4) {

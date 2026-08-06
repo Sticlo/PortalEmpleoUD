@@ -1,5 +1,5 @@
 """
-Servicio de scraping — orquesta adapters de portales.
+Servicio de scraping — orquesta adapters + cola (cache / single-flight / rate limit).
 """
 
 from typing import List, Optional
@@ -9,6 +9,7 @@ from app.domain.filters.blocked_companies import is_blocked_company, reject_bloc
 from app.domain.models.offer import Offer
 from app.infrastructure.persistence import memory as store
 from app.infrastructure.scraping.base import BasePortalScraper
+from app.infrastructure.scraping.job_queue import cache_key, scrape_queue
 from app.infrastructure.scraping.portals.computrabajo import ComputrabajoScraper
 from app.infrastructure.scraping.portals.elempleo import ElempleoScraper
 from app.infrastructure.scraping.portals.linkedin import LinkedInScraper
@@ -32,12 +33,31 @@ class ScrapeService:
         city: Optional[str] = None,
         max_age_hours: Optional[int] = None,
         replace_source: bool = True,
+        force: bool = False,
     ) -> dict:
         s = get_settings()
         city = city or s.default_city
         max_age = max_age_hours or s.max_offer_age_hours
         query = (query or "desarrollador").strip()
+        key = cache_key(query, city, max_age)
 
+        def _do_scrape() -> dict:
+            return self._run_portals(
+                query=query,
+                city=city,
+                max_age=max_age,
+                replace_source=replace_source,
+            )
+
+        return scrape_queue.run(key, _do_scrape, force=force)
+
+    def _run_portals(
+        self,
+        query: str,
+        city: str,
+        max_age: int,
+        replace_source: bool,
+    ) -> dict:
         purged = store.purge_stale(max_age)
         blocked = 0
 
@@ -67,7 +87,6 @@ class ScrapeService:
                 errors.append({"source": scraper.name, "error": str(e)})
                 per_source[scraper.name] = 0
 
-        # Limpieza final: viejas + bloqueadas que hayan quedado en memoria
         purged += store.purge_stale(max_age)
         for offer in list(store.list_offers()):
             if is_blocked_company(offer):

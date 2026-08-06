@@ -41,7 +41,11 @@ export function buildAtsDocument(p: HvProfile): string {
 
   lines.push(p.nombre || 'HOJA DE VIDA');
   if (contact.length) lines.push(contact.join(' · '));
-  lines.push([p.ciudad, p.busca ? `Busca: ${p.busca}` : ''].filter(Boolean).join(' · '));
+  lines.push(
+    [p.direccion?.trim(), p.ciudad, p.busca ? `Busca: ${p.busca}` : '']
+      .filter(Boolean)
+      .join(' · '),
+  );
   lines.push('');
 
   if (p.resumen.trim()) {
@@ -109,7 +113,9 @@ export function buildAdaptedAtsDocument(
   lines.push(p.nombre || 'HOJA DE VIDA');
   if (contact.length) lines.push(contact.join(' · '));
   lines.push(
-    [p.ciudad, p.busca ? `Busca: ${p.busca}` : ''].filter(Boolean).join(' · '),
+    [p.direccion?.trim(), p.ciudad, p.busca ? `Busca: ${p.busca}` : '']
+      .filter(Boolean)
+      .join(' · '),
   );
   lines.push('');
 

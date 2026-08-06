@@ -39,6 +39,15 @@ export interface OfferCard {
   cvGap: string;
 }
 
+export interface IndexedSearchResponse {
+  query: string;
+  city: string;
+  count: number;
+  offers: ApiOffer[];
+  source: string;
+  note: string;
+}
+
 export interface ScrapeResponse {
   query: string;
   city: string;
@@ -49,6 +58,9 @@ export interface ScrapeResponse {
   per_source: Record<string, number>;
   errors: { source: string; error: string }[];
   offers: ApiOffer[];
+  from_cache?: boolean;
+  shared_waiters?: number;
+  queue_note?: string;
 }
 
 export interface OfferListResponse {

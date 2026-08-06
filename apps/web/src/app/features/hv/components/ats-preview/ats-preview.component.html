@@ -7,7 +7,12 @@
     <button type="button" class="ats-jump" (click)="jumpToStep.emit(0)" title="Editar datos">
       <h3 class="ats-name">{{ hv.profile().nombre || 'Tu nombre' }}</h3>
       <p class="ats-line">{{ hv.contactLine() || 'correo · celular · LinkedIn' }}</p>
-      <p class="ats-line">{{ hv.profile().ciudad || 'Ciudad' }} · Busca: {{ hv.profile().busca }}</p>
+      <p class="ats-line">
+        @if (hv.profile().direccion.trim()) {
+          {{ hv.profile().direccion }} ·
+        }
+        {{ hv.profile().ciudad || 'Ciudad' }} · Busca: {{ hv.profile().busca }}
+      </p>
     </button>
 
     @if (hv.profile().resumen.trim()) {
