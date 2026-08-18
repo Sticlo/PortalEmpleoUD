@@ -1,8 +1,10 @@
 """
 Cliente DeepSeek — adaptar HV a una oferta usando solo skills reales.
 
-Usa deepseek-v4-flash (más barato) con thinking desactivado para no gastar
-tokens en chain-of-thought en una tarea de reescritura ATS.
+CRÍTICO (costo producción): el modelo está FIJO en código.
+Nunca se lee DEEPSEEK_MODEL del entorno: un .env con v4-pro
+o un deploy mal copiado no puede inflar la factura de miles de estudiantes.
+Thinking siempre OFF (Flash lo activa por defecto y cobra output extra).
 """
 
 from __future__ import annotations
@@ -18,9 +20,18 @@ from app.core.config import get_settings
 
 log = logging.getLogger("bolsa-empleo.deepseek")
 
+# Único modelo permitido en RutaUD. No cambiar sin revisión de presupuesto.
+CHEAPEST_MODEL = "deepseek-v4-flash"
+_BLOCKED_MODELS = ("pro", "reasoner", "r1")
+
 
 class DeepSeekError(Exception):
     pass
+
+
+def locked_model() -> str:
+    """Siempre Flash. Ignora env para no perder plata en producción."""
+    return CHEAPEST_MODEL
 
 
 def chat(
@@ -36,14 +47,32 @@ def chat(
             "Falta DEEPSEEK_API_KEY. Configúrala en .env en la raíz del proyecto."
         )
 
+    wanted = (settings.deepseek_model or "").strip().lower()
+    if wanted and wanted != CHEAPEST_MODEL:
+        log.warning(
+            "DEEPSEEK_MODEL=%s ignorado. RutaUD fuerza %s (costo).",
+            settings.deepseek_model,
+            CHEAPEST_MODEL,
+        )
+    if any(part in wanted for part in _BLOCKED_MODELS):
+        log.error(
+            "Intento de modelo caro (%s) bloqueado. Usando %s.",
+            settings.deepseek_model,
+            CHEAPEST_MODEL,
+        )
+
+    model = CHEAPEST_MODEL
+    # Thinking NUNCA en producción de HV: dispara tokens de salida.
+    _ = thinking
+
     url = f"{settings.deepseek_base_url.rstrip('/')}/chat/completions"
     payload: dict[str, Any] = {
-        "model": settings.deepseek_model,
+        "model": model,
         "messages": messages,
         "temperature": temperature,
-        "max_tokens": max_tokens,
-        # V4 Flash tiene thinking ON por defecto → más output = más $
-        "thinking": {"type": "enabled" if thinking else "disabled"},
+        "max_tokens": min(int(max_tokens), 900),
+        # Docs oficiales: thinking.type default = enabled (caro).
+        "thinking": {"type": "disabled"},
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
@@ -53,12 +82,7 @@ def chat(
         "Content-Type": "application/json",
     }
 
-    log.info(
-        "DeepSeek request model=%s thinking=%s max_tokens=%s",
-        settings.deepseek_model,
-        thinking,
-        max_tokens,
-    )
+    log.info("DeepSeek request model=%s thinking=disabled max_tokens=%s", model, max_tokens)
 
     resp = requests.post(url, headers=headers, json=payload, timeout=90)
     if resp.status_code != 200:
@@ -73,8 +97,21 @@ def chat(
             usage.get("completion_tokens"),
             usage.get("total_tokens"),
         )
+    used = (data.get("model") or model).lower()
+    if "pro" in used or "reasoner" in used:
+        raise DeepSeekError(
+            f"DeepSeek respondió con modelo caro ({data.get('model')}). Abortado."
+        )
 
     message = data["choices"][0]["message"]
+    reasoning = (message.get("reasoning_content") or "").strip()
+    details = (usage.get("completion_tokens_details") or {}) if usage else {}
+    reasoning_tok = int(details.get("reasoning_tokens") or 0)
+    if reasoning or reasoning_tok:
+        log.error(
+            "DeepSeek thinking SIGUE activo (reasoning_tokens=%s). Revisar payload.",
+            reasoning_tok,
+        )
     content: Optional[str] = message.get("content")
     if not content:
         raise DeepSeekError("DeepSeek devolvió content vacío")

@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from app.domain.models.offer import Offer
 
@@ -40,6 +40,24 @@ GENERIC = {
     "trabajo",
     "profesional",
     "dev",
+    "practicante",
+    "intern",
+}
+
+# Nivel de experiencia: no es profesión; no debe casar “junior” con un abogado junior.
+JUNIOR_WORDS = {
+    "junior",
+    "practicante",
+    "intern",
+    "trainee",
+    "egresado",
+    "entry",
+}
+SENIOR_WORDS = {
+    "senior",
+    "lead",
+    "principal",
+    "experto",
 }
 
 SYNONYMS = {
@@ -59,7 +77,8 @@ SYNONYMS = {
     "angular": ("angular", "frontend"),
     "datos": ("datos", "data", "python", "sql", "etl"),
     "quimico": ("quimico", "quimica", "proceso-quimico"),
-    "civil": ("civil", "estructur", "obra", "construccion"),
+    # “civil” suelto casa “responsabilidad civil”. El sentido de ingeniería va aparte.
+    "civil": ("ingeniero-civil", "civil-engineer", "ingenieria-civil", "estructur", "obras-civiles"),
     "forestal": ("forestal", "ambiental", "bosque"),
     "electronico": ("electronico", "electronica", "hardware", "iot", "plc"),
     "catastral": (
@@ -135,6 +154,10 @@ NOISE_TITLE = (
     "conductor",
     "mecanico",
     "mecanic",
+    "abogado",
+    "lawyer",
+    "indemniz",
+    "casualty",
 )
 
 SOFTWARE_QUERY_HINTS = (
@@ -203,9 +226,102 @@ def _query_is_software(query: str) -> bool:
     return any(h in q for h in SOFTWARE_QUERY_HINTS)
 
 
-def _score(offer: Offer, tokens: List[str], needles: List[str]) -> int:
+def _query_seniority(query: str) -> Optional[str]:
+    toks = set(_tokens(query))
+    if toks & JUNIOR_WORDS:
+        return "junior"
+    if toks & SENIOR_WORDS:
+        return "senior"
+    return None
+
+
+def _title_is_junior(title: str) -> bool:
+    return any(w in title for w in ("junior", "practicante", "intern", "trainee", "egresado", "entry"))
+
+
+def _title_is_senior(title: str) -> bool:
+    # Evitar “sr” de 2 letras; LinkedIn usa senior / lead / principal
+    return any(
+        w in title
+        for w in ("senior", "lead", "principal", "jefe-", "experto")
+    )
+
+
+def _is_legal_civil(title: str, hay: str) -> bool:
+    blob = f"{title} {hay}"
+    return any(
+        n in blob
+        for n in (
+            "abogado",
+            "lawyer",
+            "indemniz",
+            "casualty",
+            "responsabilidad-civil",
+            "juridic",
+            "litigio",
+            "legal",
+        )
+    )
+
+
+def _is_civil_engineering(offer: Offer) -> bool:
+    """ingeniero civil ≠ responsabilidad civil / abogado junior."""
+    title = _title(offer)
     hay = _hay(offer)
-    return sum(4 for n in needles if n in hay) + sum(1 for t in tokens if t in hay)
+    if _is_legal_civil(title, hay) and not (
+        "ingeniero-civil" in title or "civil-engineer" in title
+    ):
+        return False
+    if any(
+        n in title
+        for n in (
+            "ingeniero-civil",
+            "civil-engineer",
+            "ingenieria-civil",
+            "obras-civiles",
+            "estructural",
+        )
+    ):
+        return True
+    if "civil" in title and any(n in title for n in ("ingenier", "engineer", "estructur")):
+        return True
+    return False
+
+
+def _profession_ok(offer: Offer, query: str) -> bool:
+    q = slugify_keyword(query)
+    title = _title(offer)
+    tokens = set(_tokens(query))
+
+    if "civil" in tokens and "catastr" not in q:
+        if "catastr" in title or "geodes" in title:
+            return "civil" in title
+        return _is_civil_engineering(offer)
+
+    return True
+
+
+def _seniority_ok(offer: Offer, query: str) -> bool:
+    """Si pide junior, no devolver Senior Civil Engineer. No exige la palabra junior en el título."""
+    level = _query_seniority(query)
+    if level != "junior":
+        return True
+    title = _title(offer)
+    if _title_is_senior(title) and not _title_is_junior(title):
+        return False
+    return True
+
+
+def _score(offer: Offer, tokens: List[str], needles: List[str], query: str) -> int:
+    hay = _hay(offer)
+    title = _title(offer)
+    s = sum(4 for n in needles if n in hay) + sum(1 for t in tokens if t in hay)
+    if _query_seniority(query) == "junior":
+        if _title_is_junior(title):
+            s += 15
+        if _title_is_senior(title):
+            s -= 20
+    return s
 
 
 def _has_needle(hay: str, needle: str) -> bool:
@@ -242,15 +358,20 @@ def filter_query_relevance(offers: List[Offer], query: str) -> List[Offer]:
         return False
 
     specific = [o for o in clean if has_specific(o)]
+    specific = [o for o in specific if _profession_ok(o, query) and _seniority_ok(o, query)]
     if specific:
-        return sorted(specific, key=lambda o: _score(o, tokens, needles), reverse=True)
+        return sorted(
+            specific,
+            key=lambda o: _score(o, tokens, needles, query),
+            reverse=True,
+        )
 
     # Solo software genérico puede ampliar a roles dev; un perfil nicho no se rellena.
     if not _is_specific_query(query) and _query_is_software(query):
         soft = [o for o in clean if _is_software_title(o)]
         if soft:
             log.info("Relevancia: query genérica; %s roles software", len(soft))
-            return sorted(soft, key=lambda o: _score(o, tokens, needles), reverse=True)
+            return sorted(soft, key=lambda o: _score(o, tokens, needles, query), reverse=True)
 
     log.info("Relevancia: 0 ofertas afines a %r (no se rellena con ajenas)", query)
     return []

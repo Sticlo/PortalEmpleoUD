@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from app.core.config import get_settings
 from app.domain.models.student import StudentProfile
 from app.domain.schemas.api import AdaptCvRequest, AdaptCvResponse
-from app.infrastructure.ai.deepseek import DeepSeekError, chat, parse_json
+from app.infrastructure.ai.deepseek import CHEAPEST_MODEL, DeepSeekError, chat, parse_json
 from app.infrastructure.persistence import memory as store
 
 log = logging.getLogger("bolsa-empleo.cv")
@@ -346,14 +346,21 @@ class CvService:
             desc = desc[:2500] + "…"
 
         user_payload = {
-            "perfil": profile.model_dump(),
+            "perfil": {
+                "nombre": profile.full_name,
+                "carrera": profile.program_slug,
+                "semestre": profile.semester,
+                "ciudad": profile.city,
+                "skills": (profile.skills or [])[:20],
+                "proyectos": (profile.projects or [])[:6],
+                "experiencia": (profile.experience or [])[:6],
+                "educacion": (profile.education or [])[:4],
+                "idiomas": (profile.languages or [])[:6],
+            },
             "oferta": {
                 "titulo": body.offer_title,
                 "empresa": body.offer_company,
                 "descripcion": desc,
-                "requisitos": body.offer_requirements,
-                "ciudad_contexto": settings.default_city,
-                "programa_contexto": settings.default_program_slug,
             },
             "analisis_previo": {
                 "affinity_score_sugerido": local.affinity_score,
@@ -377,7 +384,7 @@ class CvService:
                 ],
                 temperature=0.2,
                 json_mode=True,
-                max_tokens=1600,
+                max_tokens=900,
                 thinking=False,
             )
         except DeepSeekError as exc:
@@ -420,5 +427,5 @@ class CvService:
             missing_skills=[str(x).strip() for x in missing if str(x).strip()][:10],
             strengths=[str(x).strip() for x in strengths if str(x).strip()][:5],
             provider="deepseek",
-            model=settings.deepseek_model,
+            model=CHEAPEST_MODEL,
         )
