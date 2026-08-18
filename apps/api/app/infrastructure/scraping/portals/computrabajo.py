@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 from app.domain.models.offer import Offer
 from app.infrastructure.scraping.base import BasePortalScraper
 from app.infrastructure.scraping.browser import human_delay, now_colombia
+from app.infrastructure.scraping.relevance import filter_query_relevance
 
 log = logging.getLogger("bolsa-empleo.scraping.computrabajo")
 
@@ -70,29 +71,31 @@ def build_search_url(
 
 
 def parse_relative_age(text: str, now: Optional[datetime] = None) -> Optional[datetime]:
-    """Convierte 'Hace 11 horas' / 'Ayer' / 'Hace 2 días' a datetime Colombia."""
+    """Convierte 'Hace 11 horas' / 'Ayer' / '1 day ago' a datetime Colombia."""
     now = now or now_colombia()
     raw = unicodedata.normalize("NFKC", (text or "")).strip().lower()
     raw = re.sub(r"\s+", " ", raw)
 
     if not raw:
         return None
-    if "minuto" in raw:
+    if "minuto" in raw or "minute" in raw:
         m = re.search(r"(\d+)", raw)
         mins = int(m.group(1)) if m else 1
         return now - timedelta(minutes=mins)
-    if "hora" in raw:
+    if "hora" in raw or "hour" in raw:
         m = re.search(r"(\d+)", raw)
         hours = int(m.group(1)) if m else 1
         return now - timedelta(hours=hours)
-    if raw == "ayer" or raw.startswith("ayer"):
-        # "Ayer" del portal ≈ últimas 24–36 h; lo anclamos dentro de la ventana de 24 h
+    if raw == "ayer" or raw.startswith("ayer") or raw in {"yesterday"} or "yesterday" in raw:
+        # Ayer ≈ 12–20 h, no 24 h exactas (eso se pintaba como “1 día”)
         return now - timedelta(hours=18)
-    if "día" in raw or "dia" in raw:
+    if "día" in raw or "dia" in raw or re.search(r"\bday", raw):
         m = re.search(r"(\d+)", raw)
         days = int(m.group(1)) if m else 1
-        return now - timedelta(days=days)
-    if "hoy" in raw:
+        if days <= 1:
+            return now - timedelta(hours=20)
+        return now - timedelta(hours=min(days * 24 - 4, days * 24))
+    if "hoy" in raw or raw in {"today"}:
         return now - timedelta(hours=1)
     return None
 
@@ -148,6 +151,7 @@ class ComputrabajoScraper(BasePortalScraper):
         )
         offers = offers[: self.limit]
         self._enrich_descriptions(offers)
+        offers = filter_query_relevance(offers, query)
         log.info("Computrabajo: %s ofertas <= %sh", len(offers), max_age_hours)
         return offers
 
@@ -234,7 +238,7 @@ class ComputrabajoScraper(BasePortalScraper):
             )
 
         results.sort(key=lambda o: o.published_at, reverse=True)
-        return self._filter_relevance(results, query)
+        return results
 
     def _enrich_descriptions(self, offers: List[Offer]) -> None:
         """Trae un extracto de la página de detalle (en paralelo)."""
@@ -281,37 +285,3 @@ class ComputrabajoScraper(BasePortalScraper):
                         prefix = f"Salario: {offer.salary}. "
                     offer.description = f"{prefix}{snippet}".strip()
 
-    def _filter_relevance(self, offers: List[Offer], query: str) -> List[Offer]:
-        """Exige términos específicos (ej. químico); 'ingeniero' solo no basta."""
-        raw_tokens = [
-            t
-            for t in slugify_keyword(query).split("-")
-            if len(t) >= 3 and t not in {"para", "como", "desde", "bogota", "con", "del"}
-        ]
-        generic = {
-            "ingeniero",
-            "ingeniera",
-            "ingenieria",
-            "desarrollador",
-            "desarrolladora",
-            "programador",
-            "analista",
-            "auxiliar",
-            "junior",
-            "senior",
-            "empleo",
-            "trabajo",
-        }
-        required = [t for t in raw_tokens if t not in generic] or raw_tokens
-        if not required:
-            return offers
-
-        def ok(offer: Offer) -> bool:
-            hay = slugify_keyword(f"{offer.title} {offer.description}")
-            return all(t in hay for t in required)
-
-        matched = [o for o in offers if ok(o)]
-        if matched:
-            return matched
-        # Si el portal no trajo nada estricto, no inventar con genéricos
-        return []

@@ -173,9 +173,17 @@ class ScrapeJobQueue:
                 "Otras personas con la misma búsqueda lo reutilizarán unos minutos. "
                 "Búsquedas distintas se atienden de a pocas para no bloquear LinkedIn/Computrabajo."
             )
-            with self._guard:
-                self._cache[key] = (time.time() + self.ttl_seconds, dict(result))
-                box["result"] = result
+            n_offers = len(result.get("offers") or [])
+            imported = int(result.get("imported") or 0)
+            # Nunca cachear vacío: un domingo/bloqueo no debe congelar 0 ofertas 10 min.
+            if imported > 0 and n_offers > 0:
+                with self._guard:
+                    self._cache[key] = (time.time() + self.ttl_seconds, dict(result))
+                    box["result"] = result
+            else:
+                log.info("scrape SKIP cache (vacío) key=%s", key)
+                with self._guard:
+                    box["result"] = result
             return result
         except Exception as exc:
             box["error"] = exc

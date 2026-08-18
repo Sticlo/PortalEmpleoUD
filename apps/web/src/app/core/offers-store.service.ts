@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { HvProfileService } from './hv-profile.service';
 import { searchQueryFromProfile, toOfferCard } from './offer-mapper';
-import { OfferCard } from './models/offer';
+import { ApiOffer, OfferCard } from './models/offer';
 import { OffersApiService } from './offers-api.service';
 
 @Injectable({ providedIn: 'root' })
@@ -20,6 +20,7 @@ export class OffersStoreService {
   readonly loadingToday = signal(false);
   readonly refreshingLive = signal(false);
   readonly searchNote = signal('');
+  readonly lastWindowHours = signal(24);
   readonly error = signal<string | null>(null);
 
   readonly count = computed(() => this.cards().length);
@@ -57,7 +58,7 @@ export class OffersStoreService {
    * - Índice local solo como fallback si portales/cola fallan (filtro estricto).
    * No pintamos “basura” de otra búsqueda mientras carga.
    */
-  async search(query?: string): Promise<OfferCard[]> {
+  async search(query?: string, force = false): Promise<OfferCard[]> {
     this.loading.set(true);
     this.refreshingLive.set(true);
     this.error.set(null);
@@ -68,29 +69,69 @@ export class OffersStoreService {
     const city = profile.ciudad || 'Bogotá';
     this.lastQuery.set(q);
 
-    try {
-      const res = await firstValueFrom(this.api.scrape(q, city, 24));
+    const applyResult = (res: {
+      offers?: ApiOffer[];
+      purged?: number;
+      from_cache?: boolean;
+      queue_note?: string;
+      freshness_note?: string;
+      max_age_hours?: number;
+      errors?: { source: string; error: string }[];
+    }): OfferCard[] => {
       this.lastPurged.set(res.purged ?? 0);
+      this.lastWindowHours.set(res.max_age_hours ?? 24);
       if (res.errors?.length) {
         console.warn('Errores de scrapers', res.errors);
       }
       const cards = (res.offers ?? []).map((o) => toOfferCard(o, profile));
       cards.sort((a, b) => b.match - a.match);
       this.cards.set(cards);
+      const bits = [res.freshness_note, res.queue_note].filter(
+        (n): n is string => Boolean(n && n.trim()),
+      );
       this.searchNote.set(
-        res.from_cache
-          ? res.queue_note ||
-              'Misma búsqueda reciente: resultado compartido (sin re-golpear portales).'
-          : res.queue_note || 'Resultados de portales',
+        bits.join(' ') ||
+          (res.from_cache
+            ? 'Misma búsqueda reciente: resultado compartido (sin re-golpear portales).'
+            : 'Resultados de portales'),
       );
       return cards;
+    };
+
+    try {
+      const res = await firstValueFrom(this.api.scrape(q, city, 24, force));
+      const cards = applyResult(res);
+      if (cards.length) return cards;
+
+      // 200 vacío: índice estricto (no dejar la demo en cero si hay histórico)
+      try {
+        const indexed = await firstValueFrom(this.api.searchIndexed(q, city));
+        const fromIndex = applyResult({
+          offers: indexed.offers,
+          purged: 0,
+          from_cache: false,
+          queue_note: indexed.note,
+          freshness_note: '',
+        });
+        if (fromIndex.length) {
+          this.searchNote.set(
+            'Portales sin vacantes frescas · coincidencias del índice (filtro estricto)',
+          );
+        }
+        return fromIndex;
+      } catch {
+        return [];
+      }
     } catch (err) {
       // Cola llena / timeout → índice estricto (solo si coincide de verdad)
       try {
         const indexed = await firstValueFrom(this.api.searchIndexed(q, city));
-        const cards = (indexed.offers ?? []).map((o) => toOfferCard(o, profile));
-        cards.sort((a, b) => b.match - a.match);
-        this.cards.set(cards);
+        const cards = applyResult({
+          offers: indexed.offers,
+          purged: 0,
+          from_cache: false,
+          queue_note: indexed.note,
+        });
         this.searchNote.set(
           cards.length
             ? 'Portales ocupados · mostrando coincidencias del índice (filtro estricto)'

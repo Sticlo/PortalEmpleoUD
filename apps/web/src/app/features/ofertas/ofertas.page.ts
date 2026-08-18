@@ -49,6 +49,7 @@ export class OfertasPage implements OnInit {
       this.toast.show('Escribe una palabra clave');
       return;
     }
+    const force = this.btnLabel() === 'Buscar de nuevo' || this.btnLabel() === 'Reintentar';
     this.searchQuery.set(q);
 
     this.showResults.set(false);
@@ -57,13 +58,14 @@ export class OfertasPage implements OnInit {
     this.searchLive.set(`«${q}» · Computrabajo, Elempleo y LinkedIn`);
 
     try {
-      const cards = await this.store.search(q);
+      const cards = await this.store.search(q, force);
       const purged = this.store.lastPurged();
+      const hours = this.store.lastWindowHours();
 
       this.searchLive.set('');
       this.subtitle.set(
         cards.length
-          ? `«${q}» · ≤24 h · elige una y prepara tu CV`
+          ? `«${q}» · ≤${hours} h · elige una y prepara tu CV`
           : `Sin resultados para «${q}». Prueba otra palabra.`,
       );
       if (purged > 0) {

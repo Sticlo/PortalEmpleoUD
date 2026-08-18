@@ -61,6 +61,7 @@ export interface ScrapeResponse {
   from_cache?: boolean;
   shared_waiters?: number;
   queue_note?: string;
+  freshness_note?: string;
 }
 
 export interface OfferListResponse {

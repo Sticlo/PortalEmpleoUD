@@ -30,6 +30,7 @@ from app.infrastructure.scraping.portals.computrabajo import (
     detect_modality,
     parse_relative_age,
 )
+from app.infrastructure.scraping.relevance import filter_query_relevance
 
 log = logging.getLogger("bolsa-empleo.scraping.linkedin")
 
@@ -130,27 +131,33 @@ def _is_bogota_relevant(location: str, title: str = "") -> bool:
 
 def _published_from_card(card, now: datetime) -> Optional[datetime]:
     time_el = card.select_one("time")
+    relative_text = _decode(time_el.get_text()) if time_el else ""
+    relative = parse_relative_age(relative_text, now=now) if relative_text else None
+    hours_or_minutes = bool(
+        re.search(r"hora|hour|minuto|minute", (relative_text or "").lower())
+    )
+
     if time_el and time_el.get("datetime"):
         raw = time_el.get("datetime")
         try:
-            # date only: 2026-08-04
             if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
-                # Preferir texto relativo si existe
-                relative = _decode(time_el.get_text())
-                parsed = parse_relative_age(relative, now=now)
-                if parsed:
-                    return parsed
+                # Fecha calendario: anclar a mediodía. LinkedIn dice "1 day ago"
+                # para todo lo de ayer; si usamos 24 h exactas, la UI pinta “1 día”.
+                if hours_or_minutes and relative:
+                    return relative
                 day = datetime.fromisoformat(raw).replace(tzinfo=now.tzinfo)
-                # Anclar a mediodía Colombia ese día
-                return day.replace(hour=12, minute=0, second=0)
+                posted = day.replace(hour=12, minute=0, second=0, microsecond=0)
+                if posted > now:
+                    posted = now - timedelta(hours=1)
+                return posted
             dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             return dt.astimezone(now.tzinfo)
         except ValueError:
             pass
-    if time_el:
-        return parse_relative_age(_decode(time_el.get_text()), now=now)
+    if relative:
+        return relative
     return None
 
 
@@ -218,6 +225,7 @@ class LinkedInScraper(BasePortalScraper):
             city=city,
         )
         self._enrich_descriptions(offers)
+        offers = filter_query_relevance(offers, query)
         log.info("LinkedIn: %s ofertas <= %sh (Bogotá/remoto)", len(offers), max_age_hours)
         return offers[: self.limit]
 

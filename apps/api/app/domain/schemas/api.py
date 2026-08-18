@@ -125,6 +125,10 @@ class ScrapeResponse(BaseModel):
         default="",
         description="Explicación humana de cache / cola / rate limit",
     )
+    freshness_note: str = Field(
+        default="",
+        description="Si se amplió la ventana (ej. 24h → 72h) por falta de vacantes de hoy",
+    )
 
 
 class AdaptCvRequest(BaseModel):

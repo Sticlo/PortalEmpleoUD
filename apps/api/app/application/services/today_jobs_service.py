@@ -27,6 +27,7 @@ CACHE_PATH = ROOT_DIR / "data" / "cache" / "empleos_de_hoy.json"
 
 # query por carrera — lo que se busca en los portales
 CAREER_QUERIES: List[Tuple[str, str, str]] = [
+    ("ingenieria-catastral", "Ingeniería Catastral y Geodesia", "ingeniero catastral"),
     ("ingenieria-civil", "Ingeniería Civil", "ingeniero civil"),
     ("ingenieria-de-sistemas", "Ingeniería de Sistemas", "desarrollador"),
     ("ingenieria-electronica", "Ingeniería Electrónica", "ingeniero electronico"),
@@ -208,10 +209,10 @@ def _fetch_career(
     return found
 
 
-def _scrape_all_careers() -> List[Offer]:
+def _scrape_all_careers(max_age: Optional[int] = None) -> List[Offer]:
     s = get_settings()
     city = s.default_city
-    max_age = s.max_offer_age_hours
+    max_age = max_age or s.max_offer_age_hours
     collected: List[Offer] = []
 
     # Carreras en paralelo (cada una lanza sus 3 portales en serie)
@@ -260,6 +261,10 @@ def sync_today_into_store(force_refresh: bool = False) -> List[Offer]:
 
     candidates = _scrape_all_careers()
     picked = _pick_diverse(candidates, day, TODAY_COUNT)
+    if not picked:
+        log.info("Empleos de hoy vacío a 24h; reintento 72h")
+        candidates = _scrape_all_careers(max_age=72)
+        picked = _pick_diverse(candidates, day, TODAY_COUNT)
     if picked:
         _save_cache(day, picked)
         return _materialize(picked)

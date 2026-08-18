@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import unicodedata
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -28,6 +27,7 @@ from app.infrastructure.scraping.portals.computrabajo import (
     detect_modality,
     parse_relative_age,
 )
+from app.infrastructure.scraping.relevance import filter_query_relevance
 
 log = logging.getLogger("bolsa-empleo.scraping.elempleo")
 
@@ -186,25 +186,4 @@ class ElempleoScraper(BasePortalScraper):
             )
 
         results.sort(key=lambda o: o.published_at, reverse=True)
-        return self._filter_relevance(results, query)
-
-    def _filter_relevance(self, offers: List[Offer], query: str) -> List[Offer]:
-        tokens = [
-            t
-            for t in re.split(r"[\s\-_/]+", query.lower())
-            if len(t) >= 4 and t not in {"para", "como", "desde", "bogota", "trabajo"}
-        ]
-        if not tokens:
-            return offers
-
-        def score(offer: Offer) -> int:
-            hay = f"{offer.title} {offer.description}".lower()
-            return sum(1 for t in tokens if t in hay)
-
-        ranked = sorted(
-            offers,
-            key=lambda o: (score(o), o.published_at.timestamp()),
-            reverse=True,
-        )
-        matched = [o for o in ranked if score(o) > 0]
-        return matched if matched else ranked
+        return filter_query_relevance(results, query)

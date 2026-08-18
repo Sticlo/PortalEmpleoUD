@@ -22,12 +22,16 @@ export class OffersApiService {
   }
 
   /** En vivo: cola + caché anti-stampede. */
-  scrape(query: string, city = 'Bogotá', maxAgeHours = 24): Observable<ScrapeResponse> {
-    return this.http.post<ScrapeResponse>(`${this.base}/scraping/run`, {
-      query,
-      city,
-      max_age_hours: maxAgeHours,
-    });
+  scrape(query: string, city = 'Bogotá', maxAgeHours = 24, force = false): Observable<ScrapeResponse> {
+    return this.http.post<ScrapeResponse>(
+      `${this.base}/scraping/run`,
+      {
+        query,
+        city,
+        max_age_hours: maxAgeHours,
+      },
+      { params: force ? { force: 'true' } : {} },
+    );
   }
 
   list(city = 'Bogotá', maxAgeHours = 24): Observable<OfferListResponse> {

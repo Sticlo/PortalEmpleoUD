@@ -13,6 +13,7 @@ const SOURCE_CLASS: Record<string, string> = {
 type CareerFamily =
   | 'sistemas'
   | 'civil'
+  | 'catastral'
   | 'electronica'
   | 'forestal'
   | 'quimica'
@@ -36,7 +37,17 @@ const CAREER_PATTERNS: Record<CareerFamily, RegExp[]> = {
     /inform[aá]tica/,
     /computaci/,
   ],
-  civil: [/civil/, /estructur/, /cimentac/, /obra\b/, /residente/, /topograf/, /vial/],
+  catastral: [
+    /catastr/,
+    /geodes/,
+    /predial/,
+    /topograf/,
+    /cartograf/,
+    /fotogrametr/,
+    /\bgis\b/,
+    /georreferenc/,
+  ],
+  civil: [/civil/, /estructur/, /cimentac/, /obra\b/, /residente/, /vial/],
   electronica: [/electr[oó]n/, /\biot\b/, /embebido/, /hardware/, /circuito/],
   forestal: [/forestal/, /ecol[oó]g/, /silvicult/, /ambiental/],
   quimica: [/qu[ií]mic/, /laboratorio/, /procesos qu[ií]m/],
@@ -71,14 +82,18 @@ export function formatFresh(publishedAt: string): string {
   const hours = Math.max(0, Math.round((Date.now() - published.getTime()) / 3_600_000));
   if (hours < 1) return 'Hace minutos';
   if (hours === 1) return 'Hace 1 h';
-  if (hours < 24) return `Hace ${hours} h`;
-  return 'Hace 1 día';
+  // Dentro de ~36 h mostramos horas (22 h, 24 h), no “1 día”
+  if (hours <= 36) return `Hace ${hours} h`;
+  const days = Math.max(1, Math.round(hours / 24));
+  if (days === 1) return 'Hace 1 día';
+  return `Hace ${days} días`;
 }
 
 function detectOfferCareer(haystack: string, programTags: string[] = []): CareerFamily {
   const tags = programTags.join(' ').toLowerCase();
   const blob = `${haystack} ${tags}`;
   const order: CareerFamily[] = [
+    'catastral',
     'civil',
     'electronica',
     'forestal',
@@ -98,6 +113,7 @@ function detectProfileCareer(profile: HvProfile): CareerFamily {
   const skills = profile.skills.join(' ').toLowerCase();
   const blob = `${carrera} ${skills} ${profile.resumen}`.toLowerCase();
 
+  if (/catastr|geodes/.test(carrera)) return 'catastral';
   if (/civil/.test(carrera)) return 'civil';
   if (/electr/.test(carrera)) return 'electronica';
   if (/forestal|ambiental/.test(carrera)) return 'forestal';
@@ -116,6 +132,7 @@ function detectProfileCareer(profile: HvProfile): CareerFamily {
 function careerFamilyLabel(f: CareerFamily): string {
   const map: Record<CareerFamily, string> = {
     sistemas: 'Sistemas / software',
+    catastral: 'Catastral / geodesia',
     civil: 'Ingeniería Civil',
     electronica: 'Electrónica',
     forestal: 'Forestal / ambiental',
@@ -295,6 +312,7 @@ export function searchQueryFromProfile(profile: HvProfile): string {
   if (skills.some((s) => s.includes('java'))) return 'desarrollador java';
   if (skills.some((s) => /qa|playwright|selenium|test/.test(s))) return 'qa automation';
   const carrera = profile.carrera.toLowerCase();
+  if (carrera.includes('catastr') || carrera.includes('geodes')) return 'ingeniero catastral';
   if (carrera.includes('civil')) return 'ingeniero civil';
   if (carrera.includes('electr')) return 'ingeniero electronico';
   if (carrera.includes('sistema') || carrera.includes('software') || carrera.includes('datos')) {

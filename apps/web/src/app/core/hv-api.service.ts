@@ -35,6 +35,7 @@ export interface AdaptCvResponse {
 
 const PROGRAM_SLUG: Record<string, string> = {
   'Ingeniería de Sistemas': 'ingenieria-de-sistemas',
+  'Ingeniería Catastral y Geodesia': 'ingenieria-catastral',
   'Ingeniería Civil': 'ingenieria-civil',
   'Ingeniería Electrónica': 'ingenieria-electronica',
   'Ingeniería Forestal': 'ingenieria-forestal',
@@ -47,6 +48,7 @@ function programSlugFromCarrera(carrera: string): string {
   const exact = PROGRAM_SLUG[carrera.trim()];
   if (exact) return exact;
   const c = carrera.toLowerCase();
+  if (/catastr|geodes/.test(c)) return 'ingenieria-catastral';
   if (/civil/.test(c)) return 'ingenieria-civil';
   if (/electr/.test(c)) return 'ingenieria-electronica';
   if (/forestal|ambiental/.test(c)) return 'ingenieria-forestal';
