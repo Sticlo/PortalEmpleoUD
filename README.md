@@ -252,7 +252,7 @@ Lazy-load por `loadChildren` en `app.routes.ts`.
 Usuario escribe query
     → OffersStore.search()
     → POST /api/v1/scraping/run
-         → job_queue (cache 10 min | single-flight | semáforo ≤2 | cola ≤8)
+         → job_queue (cache 10 min | single-flight | ≤4 búsquedas | cola ≤12 | cupo por portal)
          → ScrapeService → portals[] → Offer[]
          → purge > max_offer_age_hours (default 24)
          → archive JSONL (métricas)
@@ -305,8 +305,11 @@ Archivo: `infrastructure/scraping/job_queue.py`.
 |-----------|-----------|----------|
 | TTL caché por query+ciudad | ~10 min | 100 alumnos misma búsqueda → 1 scrape |
 | Single-flight | 1 líder por key | Evita N scrapes idénticos en paralelo |
-| Semáforo global | 2 jobs portal | No tumbar Computrabajo/Elempleo |
-| Cola distinta máx. | 8 | Más allá → 503 amable |
+| Búsquedas distintas a la vez | 4 | Acotar hilos y carga |
+| Cupo por portal | 2 búsquedas por portal | No tumbar los portales |
+| Ritmo LinkedIn | ≥0,4 s entre peticiones, ≤10 detalles (caché 6 h), pausa 3 min si responde 429 | LinkedIn corta por ráfagas |
+| Espera por portal ocupado | ~25 s | Pasado eso se responde con los demás portales |
+| Cola distinta máx. | 12 | Más allá → 503 amable |
 | Timeout espera | ~90 s | No colgar workers eternos |
 
 **Hoy:** in-memory / threading (un proceso).  

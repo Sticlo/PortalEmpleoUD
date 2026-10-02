@@ -14,15 +14,46 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any, Callable, Dict, Optional, Tuple
+from contextlib import contextmanager
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
 log = logging.getLogger("bolsa-empleo.scrape-queue")
 
 DEFAULT_TTL_SECONDS = 10 * 60  # misma query → reusar 10 min
-MAX_CONCURRENT_PORTAL_JOBS = 2  # scrapes reales en paralelo (anti-bot)
-# Búsquedas distintas esperando hueco de portal. Más allá → rechazo controlado.
-MAX_QUEUED_DISTINCT = 8
-PORTAL_WAIT_TIMEOUT = 90  # segundos máximos en cola de portales
+# Búsquedas distintas en curso a la vez. El freno anti-bot real es PORTAL_SLOTS.
+MAX_CONCURRENT_PORTAL_JOBS = 4
+# Búsquedas distintas esperando hueco. Más allá → rechazo controlado.
+MAX_QUEUED_DISTINCT = 12
+PORTAL_WAIT_TIMEOUT = 90  # segundos máximos en cola de búsquedas
+
+# Búsquedas simultáneas por portal. En LinkedIn el freno real es el ritmo global
+# de peticiones de portals/linkedin.py.
+PORTAL_SLOTS = {"computrabajo": 2, "elempleo": 2, "linkedin": 2}
+DEFAULT_PORTAL_SLOTS = 2
+# Si un portal sigue ocupado tras esto, la búsqueda sigue sin él en vez de esperar.
+PORTAL_SLOT_TIMEOUT = 25
+
+_slot_guard = threading.Lock()
+_slots: Dict[str, threading.Semaphore] = {}
+
+
+class PortalBusyError(TimeoutError):
+    pass
+
+
+@contextmanager
+def portal_slot(name: str, timeout: float = PORTAL_SLOT_TIMEOUT) -> Iterator[None]:
+    with _slot_guard:
+        sem = _slots.get(name)
+        if sem is None:
+            sem = threading.Semaphore(PORTAL_SLOTS.get(name, DEFAULT_PORTAL_SLOTS))
+            _slots[name] = sem
+    if not sem.acquire(timeout=timeout):
+        raise PortalBusyError(f"{name} ocupado por otras búsquedas; se omitió esta vez")
+    try:
+        yield
+    finally:
+        sem.release()
 
 
 def cache_key(query: str, city: str, max_age_hours: int) -> str:
@@ -60,6 +91,7 @@ class ScrapeJobQueue:
                 "ttl_seconds": self.ttl_seconds,
                 "max_concurrent_portal_jobs": self.max_concurrent,
                 "max_queued_distinct": self.max_queued,
+                "portal_slots": PORTAL_SLOTS,
                 "note": (
                     "Misma query → cache/single-flight. "
                     "Queries distintas → cola limitada; el resto usa Empleos de hoy o reintenta."

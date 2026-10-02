@@ -80,7 +80,7 @@ def get_settings() -> Settings:
             "CV_GENERATIONS_PER_STUDENT_MONTH", 10
         ),
         deepseek_daily_limit=_env_int("DEEPSEEK_DAILY_LIMIT", 200),
-        deepseek_daily_limit_per_ip=_env_int("DEEPSEEK_DAILY_LIMIT_PER_IP", 5),
+        deepseek_daily_limit_per_ip=_env_int("DEEPSEEK_DAILY_LIMIT_PER_IP", 30),
         scraper_proxy_url=_env("SCRAPER_PROXY_URL", "").strip(),
         database_url=_env("DATABASE_URL", "sqlite:///./data/bolsa_empleo.db"),
     )

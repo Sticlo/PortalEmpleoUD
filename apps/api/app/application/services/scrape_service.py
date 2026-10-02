@@ -3,6 +3,7 @@ Servicio de scraping — orquesta adapters + cola (cache / single-flight / rate 
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
 from app.core.config import get_settings
@@ -10,12 +11,26 @@ from app.domain.filters.blocked_companies import is_blocked_company, reject_bloc
 from app.domain.models.offer import Offer
 from app.infrastructure.persistence import memory as store
 from app.infrastructure.scraping.base import BasePortalScraper
-from app.infrastructure.scraping.job_queue import cache_key, scrape_queue
+from app.infrastructure.scraping.job_queue import (
+    MAX_CONCURRENT_PORTAL_JOBS,
+    cache_key,
+    portal_slot,
+    scrape_queue,
+)
 from app.infrastructure.scraping.portals.computrabajo import ComputrabajoScraper
 from app.infrastructure.scraping.portals.elempleo import ElempleoScraper
 from app.infrastructure.scraping.portals.linkedin import LinkedInScraper
 
 log = logging.getLogger("bolsa-empleo.scrape")
+
+# Ventana más amplia que usa una búsqueda (reintento a 72 h). Purgar con una ventana
+# menor borraría ofertas que otra búsqueda en curso acaba de traer.
+STORE_MAX_AGE_HOURS = 72
+PORTAL_LABELS = {"computrabajo": "Computrabajo", "elempleo": "Elempleo", "linkedin": "LinkedIn"}
+# 3 portales por búsqueda × búsquedas simultáneas.
+_portal_pool = ThreadPoolExecutor(
+    max_workers=3 * MAX_CONCURRENT_PORTAL_JOBS, thread_name_prefix="portal"
+)
 
 
 def related_queries(query: str) -> List[str]:
@@ -53,7 +68,6 @@ class ScrapeService:
         query: str = "desarrollador",
         city: Optional[str] = None,
         max_age_hours: Optional[int] = None,
-        replace_source: bool = True,
         force: bool = False,
     ) -> dict:
         s = get_settings()
@@ -63,7 +77,7 @@ class ScrapeService:
         extras = related_queries(query)
         key = cache_key(query, city, max_age)
 
-        def _merge(queries: List[str], max_age_hours: int, replace_first: bool) -> dict:
+        def _merge(queries: List[str], max_age_hours: int) -> dict:
             merged_offers: List[Offer] = []
             merged_ids: set[str] = set()
             errors: List[dict] = []
@@ -71,13 +85,8 @@ class ScrapeService:
             purged = 0
             blocked = 0
             last: dict = {}
-            for i, q in enumerate(queries):
-                chunk = self._run_portals(
-                    query=q,
-                    city=city,
-                    max_age=max_age_hours,
-                    replace_source=replace_first and i == 0,
-                )
+            for q in queries:
+                chunk = self._run_portals(query=q, city=city, max_age=max_age_hours)
                 last = chunk
                 purged += int(chunk.get("purged") or 0)
                 blocked += int(chunk.get("blocked") or 0)
@@ -109,7 +118,7 @@ class ScrapeService:
             return last
 
         def _do_scrape() -> dict:
-            result = _merge([query], max_age, replace_first=True)
+            result = _merge([query], max_age)
             note_bits: List[str] = []
             if len(result.get("offers") or []) < 5 and max_age <= 24:
                 wider = 72
@@ -121,7 +130,7 @@ class ScrapeService:
                     wider,
                 )
                 qs = [query, *extras] if extras else [query]
-                result = _merge(qs, wider, replace_first=True)
+                result = _merge(qs, wider)
                 note_bits.append(
                     "Pocas vacantes de las últimas 24 h (típico en fin de semana o perfil nicho). "
                     "Se amplió a 72 h."
@@ -131,6 +140,10 @@ class ScrapeService:
                         "También se buscó catastro, geodesia y topografía "
                         "(afines a Ingeniería Catastral y Geodesia)."
                     )
+            failed = sorted({PORTAL_LABELS.get(e["source"], e["source"]) for e in result.get("errors") or []})
+            if failed:
+                verb = "no respondió" if len(failed) == 1 else "no respondieron"
+                note_bits.append(f"{' y '.join(failed)} {verb} esta vez; se muestran los demás portales.")
             if not result.get("offers"):
                 note_bits.append(
                     "En los portales casi no hay vacantes frescas de este perfil. "
@@ -141,51 +154,43 @@ class ScrapeService:
 
         return scrape_queue.run(key, _do_scrape, force=force)
 
-    def _run_portals(
-        self,
-        query: str,
-        city: str,
-        max_age: int,
-        replace_source: bool,
-    ) -> dict:
-        purged = store.purge_stale(max_age)
-        blocked = 0
+    def _run_portals(self, query: str, city: str, max_age: int) -> dict:
+        """Consulta los portales en paralelo (cada uno con su cupo en PORTAL_SLOTS).
 
+        La respuesta sale de lo que trajo ESTA búsqueda, no del store compartido:
+        otras búsquedas en curso pueden estar escribiendo en él al mismo tiempo.
+        """
+
+        def fetch(scraper: BasePortalScraper) -> List[Offer]:
+            with portal_slot(scraper.name):
+                return scraper.fetch_offers(city=city, max_age_hours=max_age, query=query)
+
+        futures = {scraper.name: _portal_pool.submit(fetch, scraper) for scraper in self.scrapers}
+
+        blocked = 0
         collected: List[Offer] = []
         errors = []
         per_source = {}
-
-        for scraper in self.scrapers:
+        for name, future in futures.items():
             try:
-                if replace_source:
-                    store.clear_offers(source=scraper.name)
-                offers = scraper.fetch_offers(
-                    city=city,
-                    max_age_hours=max_age,
-                    query=query,
-                )
-                kept = 0
-                for offer in offers:
-                    if is_blocked_company(offer):
-                        blocked += 1
-                        continue
-                    store.add_offer(offer)
-                    collected.append(offer)
-                    kept += 1
-                per_source[scraper.name] = kept
+                offers = future.result()
             except Exception as e:
-                errors.append({"source": scraper.name, "error": str(e)})
-                per_source[scraper.name] = 0
-
-        purged += store.purge_stale(max_age)
-        for offer in list(store.list_offers()):
-            if is_blocked_company(offer):
-                store.remove_offer(offer.id)
-                blocked += 1
+                errors.append({"source": name, "error": str(e)})
+                per_source[name] = 0
+                continue
+            kept = 0
+            for offer in offers:
+                if is_blocked_company(offer):
+                    blocked += 1
+                    continue
+                collected.append(offer)
+                kept += 1
+            per_source[name] = kept
 
         collected = reject_blocked(collected)
-        kept_ids = {o.id for o in store.list_offers()}
-        collected = [o for o in collected if o.id in kept_ids]
+        for offer in collected:
+            store.add_offer(offer)
+        purged = store.purge_stale(STORE_MAX_AGE_HOURS)
 
         payload = {
             "query": query,

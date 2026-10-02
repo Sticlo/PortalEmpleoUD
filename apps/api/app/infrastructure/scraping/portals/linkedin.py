@@ -15,9 +15,11 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlencode, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
@@ -49,6 +51,58 @@ HEADERS = {
     "Accept-Language": "es-CO,es;q=0.9,en;q=0.8",
     "Accept": "text/html,application/xhtml+xml",
 }
+
+# LinkedIn corta (429) por ráfagas de peticiones, no solo por concurrencia.
+# Todas las búsquedas comparten este ritmo, esta caché y esta pausa.
+MIN_REQUEST_INTERVAL_S = 0.4
+MAX_DETAILS = 10
+DETAIL_WORKERS = 3
+DETAIL_TTL_S = 6 * 3600
+COOLDOWN_S = 3 * 60
+_RATE_LIMIT_STATUS = {429, 999}
+
+_pace_lock = threading.Lock()
+_last_request_at = 0.0
+_state_lock = threading.Lock()
+_cooldown_until = 0.0
+_detail_cache: Dict[str, Tuple[float, str, Optional[int]]] = {}
+
+
+def _pace() -> None:
+    global _last_request_at
+    with _pace_lock:
+        wait = _last_request_at + MIN_REQUEST_INTERVAL_S - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _last_request_at = time.monotonic()
+
+
+def _cooling() -> bool:
+    with _state_lock:
+        return _cooldown_until > time.monotonic()
+
+
+def _start_cooldown(status: int) -> None:
+    global _cooldown_until
+    with _state_lock:
+        _cooldown_until = time.monotonic() + COOLDOWN_S
+    log.warning("LinkedIn respondió %s: se pausa %s s para no empeorar el bloqueo", status, COOLDOWN_S)
+
+
+def _cached_detail(job_id: str) -> Optional[Tuple[str, Optional[int]]]:
+    with _state_lock:
+        hit = _detail_cache.get(job_id)
+        if not hit:
+            return None
+        if time.monotonic() > hit[0]:
+            del _detail_cache[job_id]
+            return None
+        return hit[1], hit[2]
+
+
+def _store_detail(job_id: str, snippet: str, applicants: Optional[int]) -> None:
+    with _state_lock:
+        _detail_cache[job_id] = (time.monotonic() + DETAIL_TTL_S, snippet, applicants)
 
 
 def _decode(text: str) -> str:
@@ -175,6 +229,8 @@ class LinkedInScraper(BasePortalScraper):
         max_age_hours: int = 24,
         query: str = "",
     ) -> List[Offer]:
+        if _cooling():
+            raise RuntimeError("LinkedIn pidió una pausa (429); se omite unos minutos")
         query = (query or "desarrollador").strip()
         # LinkedIn responde mejor con keywords cortas tipo Dev / desarrollador
         keywords = query
@@ -201,12 +257,16 @@ class LinkedInScraper(BasePortalScraper):
                 "start": start,
             }
             try:
+                _pace()
                 resp = http_client.get(
                     GUEST_SEARCH,
                     params=params,
                     headers=HEADERS,
                     timeout=self.timeout,
                 )
+                if resp.status_code in _RATE_LIMIT_STATUS:
+                    _start_cooldown(resp.status_code)
+                    break
                 if resp.status_code != 200 or len(resp.text) < 200:
                     log.warning("LinkedIn page start=%s status=%s", start, resp.status_code)
                     break
@@ -306,22 +366,40 @@ class LinkedInScraper(BasePortalScraper):
 
     def _enrich_descriptions(self, offers: List[Offer]) -> None:
         pairs: List[Tuple[Offer, str]] = []
-        for o in offers[:18]:
+        for o in offers[:MAX_DETAILS]:
             m = re.search(r"(\d{8,})", o.id) or re.search(r"(\d{8,})", o.url or "")
             if m:
                 pairs.append((o, m.group(1)))
         if not pairs:
             return
 
-        by_jid = {jid: offer for offer, jid in pairs}
+        by_jid: Dict[str, Offer] = {}
+        for offer, jid in pairs:
+            cached = _cached_detail(jid)
+            if cached is None:
+                by_jid[jid] = offer
+                continue
+            snippet, applicants = cached
+            if snippet:
+                offer.description = snippet
+            if applicants is not None:
+                offer.applicants = applicants
+        if not by_jid:
+            return
 
         def fetch_one(job_id: str) -> Tuple[str, str, Optional[int]]:
+            if _cooling():
+                return job_id, "", None
             try:
+                _pace()
                 r = http_client.get(
                     f"{GUEST_DETAIL}/{job_id}",
                     headers=HEADERS,
                     timeout=14,
                 )
+                if r.status_code in _RATE_LIMIT_STATUS:
+                    _start_cooldown(r.status_code)
+                    return job_id, "", None
                 if r.status_code != 200:
                     return job_id, "", None
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -365,12 +443,13 @@ class LinkedInScraper(BasePortalScraper):
                             if m:
                                 applicants = int(m.group(1).replace(".", ""))
 
+                _store_detail(job_id, snippet, applicants)
                 return job_id, snippet, applicants
             except Exception as e:
                 log.debug("LinkedIn detail %s: %s", job_id, e)
                 return job_id, "", None
 
-        with ThreadPoolExecutor(max_workers=5) as pool:
+        with ThreadPoolExecutor(max_workers=DETAIL_WORKERS) as pool:
             futs = [pool.submit(fetch_one, jid) for jid in by_jid]
             for fut in as_completed(futs):
                 jid, snippet, applicants = fut.result()
