@@ -20,10 +20,10 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 from urllib.parse import urlencode, urlparse, urlunparse
 
-import requests
 from bs4 import BeautifulSoup
 
 from app.domain.models.offer import Offer
+from app.infrastructure.scraping import http_client
 from app.infrastructure.scraping.base import BasePortalScraper
 from app.infrastructure.scraping.browser import human_delay, now_colombia
 from app.infrastructure.scraping.portals.computrabajo import (
@@ -201,7 +201,7 @@ class LinkedInScraper(BasePortalScraper):
                 "start": start,
             }
             try:
-                resp = requests.get(
+                resp = http_client.get(
                     GUEST_SEARCH,
                     params=params,
                     headers=HEADERS,
@@ -317,7 +317,7 @@ class LinkedInScraper(BasePortalScraper):
 
         def fetch_one(job_id: str) -> Tuple[str, str, Optional[int]]:
             try:
-                r = requests.get(
+                r = http_client.get(
                     f"{GUEST_DETAIL}/{job_id}",
                     headers=HEADERS,
                     timeout=14,

@@ -1,11 +1,12 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { parseSkillTokens } from '../../../../core/hv-ats-export';
 import { HvProfileService } from '../../../../core/hv-profile.service';
 
 @Component({
   selector: 'app-ats-form',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './ats-form.component.html',
 })
 export class AtsFormComponent {

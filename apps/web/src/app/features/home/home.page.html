@@ -1,4 +1,175 @@
-<section class="page-view">
-  <app-home-hero />
-  <app-how-it-works />
-</section>
+<div class="lp" #landing data-ambient="hero">
+  <div class="lp-ambient" aria-hidden="true">
+    <span class="lp-light lp-light--a"></span>
+    <span class="lp-light lp-light--b"></span>
+    <span class="lp-light lp-light--c"></span>
+  </div>
+
+  <nav class="lp-nav" aria-label="Secciones del inicio">
+    <span class="lp-nav-brand">RutaUD</span>
+    <span class="lp-nav-links">
+      @for (s of sections; track s.id) {
+        <button type="button" class="lp-nav-link" [attr.data-nav]="s.id" (click)="go(s.id)">{{ s.label }}</button>
+      }
+    </span>
+    <a routerLink="/hoja-de-vida" class="lp-nav-cta">Crear HV</a>
+  </nav>
+
+  <!-- Hero -->
+  <section id="inicio" class="lp-sec lp-hero" data-ambient="hero" data-hero>
+    <div class="lp-layer lp-layer--back" data-speed="0.2" aria-hidden="true">
+      <span class="lp-watermark">RUTAUD</span>
+    </div>
+    <div class="lp-layer lp-layer--front" data-speed="1.5" aria-hidden="true">
+      <span class="lp-orb lp-orb--1" data-pointer="38"></span>
+      <span class="lp-orb lp-orb--2" data-pointer="-26"></span>
+    </div>
+
+    <div class="lp-hero-inner">
+      <p class="lp-pill lp-fade" style="--d: 0">
+        <span class="lp-pill-dot"></span>
+        Proyecto universitario independiente · Gratis para estudiantes UD
+      </p>
+
+      <h1 class="lp-hero-title" aria-label="Tu primer empleo empieza aquí.">
+        @for (w of heroWords; track $index) {
+          <span class="lp-w" aria-hidden="true"><span class="lp-w-in" [class.lp-accent]="w.accent" [style.--i]="$index">{{ w.text }}</span></span>
+        }
+      </h1>
+
+      <p class="lp-hero-sub lp-fade" style="--d: 6">
+        Hecho por un estudiante de la Universidad Distrital para mejorar nuestras condiciones laborales
+        y acercarnos prácticas y primeros empleos reales.
+      </p>
+
+      <div class="lp-hero-cta lp-fade" style="--d: 7">
+        <a routerLink="/hoja-de-vida" class="lp-btn lp-btn--primary" data-glow>
+          <span>Empezar mi hoja de vida</span>
+          <span class="lp-btn-arrow" aria-hidden="true">→</span>
+        </a>
+        <a routerLink="/ofertas" class="lp-btn lp-btn--ghost" data-glow>
+          <span>Ver búsqueda con IA</span>
+        </a>
+      </div>
+
+      <p class="lp-status lp-fade" style="--d: 8" [class.ready]="hv.saved()">
+        <span class="lp-status-dot"></span>
+        <span>{{ hv.statusLabel() }}</span>
+      </p>
+    </div>
+
+    <button type="button" class="lp-scroll lp-fade" style="--d: 9" (click)="go('como-funciona')">
+      <span class="lp-scroll-line" aria-hidden="true"></span>
+      <span>Desliza</span>
+    </button>
+  </section>
+
+  <!-- Showcase -->
+  <section id="como-funciona" class="lp-sec lp-show" data-ambient="show">
+    <div class="lp-layer lp-layer--back" data-speed="0.2" aria-hidden="true">
+      <span class="lp-watermark lp-watermark--side">01—04</span>
+    </div>
+
+    <header class="lp-head">
+      <p class="lp-eyebrow">Cómo funciona</p>
+      <h2 class="lp-h2">Cuatro pasos. <span class="lp-dim">Cero complicaciones.</span></h2>
+    </header>
+
+    <div class="lp-grid">
+      @for (s of steps; track s.n) {
+        <a [routerLink]="s.link" class="lp-card" data-tilt>
+          <span class="lp-card-glow" aria-hidden="true"></span>
+          <span class="lp-card-n">{{ s.n }}</span>
+          <strong class="lp-card-title">{{ s.title }}</strong>
+          <span class="lp-card-text">{{ s.text }}</span>
+          <span class="lp-card-cta">{{ s.cta }} <span aria-hidden="true">→</span></span>
+        </a>
+      }
+    </div>
+  </section>
+
+  <!-- Concepto -->
+  <section id="proyecto" class="lp-sec lp-concept" data-ambient="concept">
+    <div class="lp-layer lp-layer--back" data-speed="0.2" aria-hidden="true">
+      <span class="lp-watermark lp-watermark--outline">INDEPENDIENTE</span>
+    </div>
+
+    <p class="lp-eyebrow">El proyecto</p>
+    <p class="lp-manifesto" data-reveal [style.--n]="manifesto.length">
+      @for (w of manifesto; track $index) {
+        <span class="lp-mw" [class.lp-accent]="w.accent" [style.--i]="$index">{{ w.text }}</span>{{ ' ' }}
+      }
+    </p>
+
+    <ul class="lp-facts">
+      <li><strong>100% gratis</strong><span>Para todos los estudiantes, sin registro.</span></li>
+      <li><strong>Independiente</strong><span>No es un servicio oficial ni está avalado por la UD.</span></li>
+      <li><strong>Por estudiantes</strong><span>Hecho desde la universidad, para la universidad.</span></li>
+    </ul>
+  </section>
+
+  <!-- Comunidad -->
+  <section id="comunidad" class="lp-sec lp-community" data-ambient="community">
+    <div class="lp-layer lp-layer--front" data-speed="1.5" aria-hidden="true">
+      <span class="lp-orb lp-orb--3"></span>
+    </div>
+    <div class="lp-layer lp-layer--front" data-speed="-0.3" aria-hidden="true">
+      <span class="lp-orb lp-orb--4"></span>
+    </div>
+
+    <header class="lp-head">
+      <p class="lp-eyebrow">Comunidad</p>
+      <h2 class="lp-h2">Esto crece si lo hacemos <span class="lp-accent">entre todos.</span></h2>
+    </header>
+
+    <div class="lp-duo">
+      <article class="lp-glass">
+        <p class="lp-glass-k">Aporta como quieras</p>
+        <h3>El aporte es libre</h3>
+        <p>
+          Cada quien colabora como pueda y si lo desea: código, diseño, ideas, reportar fallos o
+          simplemente compartir RutaUD con tu curso. Todo suma.
+        </p>
+        <a [href]="repoUrl" target="_blank" rel="noopener" class="lp-link">
+          Colaborar en GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </article>
+
+      <article class="lp-glass">
+        <p class="lp-glass-k">¿Conoces una oferta?</p>
+        <h3>Publícala en Empresas</h3>
+        <p>
+          Si sabes de una práctica o vacante, publícala. Una oferta que compartes puede ser el
+          primer empleo de otro estudiante.
+        </p>
+        <a routerLink="/empresa" class="lp-link">Publicar una oferta <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="empezar" class="lp-sec lp-cta" data-ambient="cta">
+    <div class="lp-layer lp-layer--back" data-speed="0.2" aria-hidden="true">
+      <span class="lp-watermark lp-watermark--dark">EMPIEZA</span>
+    </div>
+
+    <p class="lp-eyebrow">Empieza hoy</p>
+    <h2 class="lp-cta-title">Tu ruta empieza con una hoja de vida.</h2>
+    <a routerLink="/hoja-de-vida" class="lp-mega" data-glow>
+      <span>Crear mi hoja de vida</span>
+      <span class="lp-mega-arrow" aria-hidden="true">→</span>
+    </a>
+    <p class="lp-cta-note">Gratis y sin registro.</p>
+
+    <div class="lp-foot">
+      <span class="lp-foot-brand">RutaUD</span>
+      <span class="lp-foot-links">
+        <a routerLink="/hoja-de-vida">Hoja de vida</a>
+        <a routerLink="/ofertas">Ofertas</a>
+        <a routerLink="/empresa">Publicar oferta</a>
+        <a routerLink="/privacidad">Privacidad</a>
+        <a [href]="repoUrl" target="_blank" rel="noopener">GitHub</a>
+      </span>
+    </div>
+  </section>
+</div>

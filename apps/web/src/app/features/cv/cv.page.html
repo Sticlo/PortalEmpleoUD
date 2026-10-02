@@ -46,6 +46,42 @@
         }
       </aside>
 
+      @if (consent.granted()) {
+        <p class="cv-consent-status">
+          Tienes autorizado el uso de IA (DeepSeek) para adaptar tus CV.
+          <button type="button" class="cv-consent-link" (click)="revokeAi()">Revocar autorización</button>
+        </p>
+      } @else {
+        <div class="cv-consent" role="region" aria-label="Autorización para usar IA">
+          <p class="cv-consent-title">¿Quieres que la IA mejore este CV?</p>
+          <p class="cv-consent-text">
+            Este CV se generó sin IA. Si lo autorizas, enviamos tus skills, experiencia, proyectos y
+            estudios (sin nombre, correo, teléfono ni dirección) y el texto de la oferta a DeepSeek, un
+            proveedor con servidores fuera de Colombia, solo para adaptar tu CV.
+          </p>
+          <label class="cv-consent-check">
+            <input
+              type="checkbox"
+              [ngModel]="consentChecked()"
+              (ngModelChange)="consentChecked.set($event)"
+              name="aiConsent"
+            />
+            <span>
+              Autorizo el tratamiento de mis datos y su transferencia a DeepSeek según el
+              <a routerLink="/privacidad" target="_blank">aviso de privacidad</a>.
+            </span>
+          </label>
+          <button
+            type="button"
+            class="btn-main btn-sm"
+            [disabled]="!consentChecked()"
+            (click)="acceptAiAndAdapt()"
+          >
+            Adaptar con IA
+          </button>
+        </div>
+      }
+
       <div class="cv-eye" role="status">
         <div class="cv-eye-head">
           <div>

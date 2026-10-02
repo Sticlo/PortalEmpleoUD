@@ -278,6 +278,19 @@ export class HvProfileService {
     this.persistSaved(false);
   }
 
+  /** Borra la HV de este navegador y genera un identificador nuevo. */
+  clearLocalData(): void {
+    try {
+      for (const key of [STORAGE_KEY, LEGACY_KEY, SAVED_KEY, STUDENT_KEY]) {
+        localStorage?.removeItem(key);
+      }
+    } catch {
+      /* SSR / private */
+    }
+    this.resetDemoSeed();
+    this.studentId.set(this.loadStudentId());
+  }
+
   stepErrors(step: number): string[] {
     const p = this.profile();
     if (step === 0) {

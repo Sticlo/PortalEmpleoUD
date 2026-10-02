@@ -1,0 +1,35 @@
+services:
+  api:
+    build: ./apps/api
+    env_file: .env
+    volumes:
+      - ./data:/srv/data
+    restart: unless-stopped
+
+  web:
+    build: ./apps/web
+    environment:
+      NG_ALLOWED_HOSTS: ${DOMAIN:?Define DOMAIN en .env}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Define DOMAIN en .env}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

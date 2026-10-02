@@ -239,4 +239,10 @@
       }
     </div>
   </div>
+  @if (step() === totalSteps() - 1) {
+    <p class="hv-privacy-note">
+      Tu HV se guarda en tu navegador. Al guardarla aceptas el tratamiento de tus datos según el
+      <a routerLink="/privacidad">aviso de privacidad</a>. La IA solo se usa si la autorizas aparte.
+    </p>
+  }
 </form>

@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from app.application.services.scrape_service import ScrapeService
 from app.domain.schemas.api import ScrapeRequest, ScrapeResponse
+from app.infrastructure.scraping import http_client
 from app.infrastructure.scraping.job_queue import scrape_queue
 
 router = APIRouter()
@@ -50,7 +51,10 @@ def run_scraping(
 @router.get(
     "/scraping/queue",
     summary="Estado de la cola de scraping",
-    description="Métricas de caché e inflight (útil para demo / monitoreo MVP).",
+    description=(
+        "Métricas de caché e inflight, y portales que están saliendo por SCRAPER_PROXY_URL "
+        "porque bloquearon la IP del servidor."
+    ),
 )
 def scraping_queue_stats():
-    return {"ok": True, **scrape_queue.stats()}
+    return {"ok": True, **scrape_queue.stats(), "proxy": http_client.status()}

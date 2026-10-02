@@ -60,11 +60,4 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
         "name": "auth",
         "description": "Autenticación (esqueleto SSO / correo institucional).",
     },
-    {
-        "name": "stats",
-        "description": (
-            "Métricas de mercado para administrativos: demanda de skills según "
-            "vacantes archivadas, tendencias y distribución por carrera/modalidad."
-        ),
-    },
 ]

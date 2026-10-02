@@ -24,7 +24,6 @@ from app.presentation.controllers.cv_controller import router as cv_router
 from app.presentation.controllers.offers_controller import router as offers_router
 from app.presentation.controllers.programs_controller import router as programs_router
 from app.presentation.controllers.scraping_controller import router as scraping_router
-from app.presentation.controllers.stats_controller import router as stats_router
 from app.presentation.controllers.students_controller import router as students_router
 from app.presentation.controllers.tenants_controller import router as tenants_router
 
@@ -39,10 +38,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
     openapi_tags=OPENAPI_TAGS,
     contact={
-        "name": "Bolsa de Empleo UD / RutaUD",
-        "url": "https://www.udistrital.edu.co",
+        "name": "RutaUD — proyecto estudiantil independiente",
+        "url": "https://github.com/Sticlo/PortalEmpleoUD",
     },
-    license_info={"name": "Uso interno institucional"},
 )
 
 app.add_middleware(
@@ -63,7 +61,6 @@ app.include_router(offers_router, prefix=prefix, tags=["offers"])
 app.include_router(cv_router, prefix=prefix, tags=["cv"])
 app.include_router(auth_router, prefix=prefix, tags=["auth"])
 app.include_router(scraping_router, prefix=prefix, tags=["scraping"])
-app.include_router(stats_router, prefix=prefix, tags=["stats"])
 
 
 @app.get("/", include_in_schema=False)

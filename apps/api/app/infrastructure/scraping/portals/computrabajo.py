@@ -17,10 +17,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from urllib.parse import quote, urljoin
 
-import requests
 from bs4 import BeautifulSoup
 
 from app.domain.models.offer import Offer
+from app.infrastructure.scraping import http_client
 from app.infrastructure.scraping.base import BasePortalScraper
 from app.infrastructure.scraping.browser import human_delay, now_colombia
 from app.infrastructure.scraping.relevance import filter_query_relevance
@@ -141,7 +141,7 @@ class ComputrabajoScraper(BasePortalScraper):
         log.info("Computrabajo GET %s", url)
 
         human_delay(0.8, 1.8)
-        resp = requests.get(url, headers=HEADERS, timeout=self.timeout)
+        resp = http_client.get(url, headers=HEADERS, timeout=self.timeout)
         resp.raise_for_status()
 
         offers = self._parse_listing(
@@ -248,7 +248,7 @@ class ComputrabajoScraper(BasePortalScraper):
 
         def fetch_one(offer: Offer) -> tuple[str, str]:
             try:
-                r = requests.get(offer.url, headers=HEADERS, timeout=12)
+                r = http_client.get(offer.url, headers=HEADERS, timeout=12)
                 r.raise_for_status()
                 soup = BeautifulSoup(r.text, "html.parser")
                 paras = [

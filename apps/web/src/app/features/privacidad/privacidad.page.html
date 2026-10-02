@@ -1,0 +1,82 @@
+<section class="page-view">
+  <div class="page page--narrow privacy-doc">
+    <header class="page-head">
+      <a routerLink="/" class="back">← Volver al inicio</a>
+      <h1>Aviso de privacidad y tratamiento de datos</h1>
+      <p>Ley 1581 de 2012 y Decreto 1377 de 2013 (compilado en el Decreto 1074 de 2015). Versión {{ version }}.</p>
+    </header>
+
+    <h2>1. Responsable del tratamiento</h2>
+    <p>
+      {{ responsible }}. Contacto: <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
+      RutaUD no es un servicio oficial ni está avalado por la Universidad Distrital Francisco José de Caldas.
+    </p>
+
+    <h2>2. Datos que tratamos</h2>
+    <ul>
+      <li>Datos de tu hoja de vida: nombre, correo, teléfono, ciudad, carrera, semestre, perfil, skills, experiencia, proyectos, estudios, idiomas y enlaces que decidas escribir.</li>
+      <li>Tu dirección IP, solo para aplicar límites de uso diario y evitar abusos.</li>
+      <li>Las búsquedas de empleo que haces.</li>
+    </ul>
+    <p>
+      No pedimos datos sensibles (salud, origen étnico, orientación política o religiosa, datos biométricos, etc.).
+      Por favor no los incluyas en tu hoja de vida.
+    </p>
+
+    <h2>3. Para qué los usamos</h2>
+    <ul>
+      <li>Armar tu hoja de vida en formato ATS.</li>
+      <li>Buscar ofertas de empleo y calcular tu afinidad con cada una.</li>
+      <li>Adaptar tu CV a una oferta, con o sin inteligencia artificial según tu autorización.</li>
+      <li>Controlar el uso del servicio (límites diarios por IP).</li>
+    </ul>
+    <p>No vendemos tus datos ni los compartimos con empresas o empleadores.</p>
+
+    <h2>4. Dónde se guardan</h2>
+    <ul>
+      <li>Tu hoja de vida se guarda en tu propio navegador. Tú la controlas y puedes borrarla en cualquier momento.</li>
+      <li>Al preparar un CV, una copia de tu perfil se guarda temporalmente en la memoria de nuestro servidor y se elimina al reiniciarlo o cuando la borras desde esta página.</li>
+    </ul>
+
+    <h2>5. Uso de inteligencia artificial y transferencia internacional</h2>
+    <p>
+      Solo si lo autorizas expresamente, enviamos a DeepSeek, un proveedor de inteligencia artificial con servidores
+      fuera de Colombia (en China), tus skills, experiencia, proyectos, estudios, idiomas, carrera, semestre y ciudad,
+      junto con el texto de la oferta, con la única finalidad de adaptar tu CV. <strong>No enviamos tu nombre, correo,
+      teléfono, dirección ni enlaces.</strong> Ese país puede no ofrecer un nivel de protección de datos equivalente al
+      colombiano; por eso pedimos tu autorización expresa (artículo 26 de la Ley 1581).
+    </p>
+    <p>
+      Si no autorizas, el servicio funciona igual: tu CV se adapta con nuestro sistema local, sin IA y sin enviar datos a terceros.
+    </p>
+
+    <h2>6. Tus derechos</h2>
+    <p>Como titular de los datos puedes, de forma gratuita:</p>
+    <ul>
+      <li>Conocer, actualizar y rectificar tus datos.</li>
+      <li>Solicitar prueba de la autorización que nos diste.</li>
+      <li>Ser informado sobre el uso que les damos.</li>
+      <li>Revocar la autorización y pedir la supresión de tus datos.</li>
+      <li>Presentar quejas ante la Superintendencia de Industria y Comercio (SIC).</li>
+    </ul>
+
+    <h2>7. Cómo ejercerlos</h2>
+    <p>
+      Escríbenos a <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>. Respondemos consultas en máximo
+      10 días hábiles y reclamos en máximo 15 días hábiles. También puedes hacerlo tú mismo aquí:
+    </p>
+    <div class="privacy-actions">
+      @if (consent.granted()) {
+        <button type="button" class="btn-outline" (click)="revokeAi()">Revocar autorización de IA</button>
+      }
+      <button type="button" class="btn-main" [disabled]="deleting()" (click)="deleteMyData()">
+        {{ deleting() ? 'Borrando…' : 'Borrar todos mis datos' }}
+      </button>
+    </div>
+
+    <h2>8. Cambios a este aviso</h2>
+    <p>
+      Si cambiamos este aviso, actualizaremos la versión y te pediremos de nuevo la autorización antes de volver a usar la IA.
+    </p>
+  </div>
+</section>

@@ -12,3 +12,6 @@ class StudentService:
 
     def upsert_profile(self, student_id: str, profile: StudentProfile) -> StudentProfile:
         return store.save_profile(student_id, profile)
+
+    def delete_profile(self, student_id: str) -> bool:
+        return store.delete_profile(student_id)

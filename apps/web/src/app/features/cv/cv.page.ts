@@ -12,6 +12,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { AiConsentService } from '../../core/ai-consent.service';
 import { buildAdaptedAtsDocument, downloadAtsPdf } from '../../core/hv-ats-export';
 import { OfferCard } from '../../core/models/offer';
 import { HvApiService } from '../../core/hv-api.service';
@@ -41,6 +42,8 @@ export class CvPage implements OnInit {
   readonly draftDoc = signal('');
 
   readonly hv = inject(HvProfileService);
+  readonly consent = inject(AiConsentService);
+  readonly consentChecked = signal(false);
   private readonly store = inject(OffersStoreService);
   private readonly api = inject(HvApiService);
   private readonly router = inject(Router);
@@ -140,6 +143,7 @@ export class CvPage implements OnInit {
           offer_title: card.title,
           offer_description: card.rawDescription || card.description,
           offer_company: card.company,
+          ai_consent: this.consent.granted(),
         }),
       );
       this.cvText.set(res.cv_text);
@@ -168,13 +172,29 @@ export class CvPage implements OnInit {
         );
       }
       this.strengths.set(strengths);
-      this.toast.show(`Afinidad ${score}% · HV lista`);
+      this.toast.show(
+        res.provider === 'deepseek' ? `Afinidad ${score}% · HV lista con IA` : `Afinidad ${score}% · HV lista`,
+      );
     } catch {
       this.applyLocal(card);
       this.toast.show('HV adaptada en modo local');
     } finally {
       this.adapting.set(false);
     }
+  }
+
+  acceptAiAndAdapt(): void {
+    const card = this.offer();
+    if (!card || !this.consentChecked()) return;
+    this.consent.accept();
+    this.editing.set(false);
+    void this.adapt(card);
+  }
+
+  revokeAi(): void {
+    this.consent.revoke();
+    this.consentChecked.set(false);
+    this.toast.show('Autorización de IA revocada · tus próximos CV se generan sin IA');
   }
 
   toggleEdit(): void {

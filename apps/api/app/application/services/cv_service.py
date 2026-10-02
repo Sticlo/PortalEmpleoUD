@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import List, Tuple
+import unicodedata
+from typing import List, Optional, Tuple
 
 from fastapi import HTTPException
 
+from app.application.services.ai_quota_service import ai_quota
 from app.core.config import get_settings
 from app.domain.models.student import StudentProfile
 from app.domain.schemas.api import AdaptCvRequest, AdaptCvResponse
@@ -78,6 +80,13 @@ COMMON_REQS = [
     "microservicios",
     "express",
 ]
+
+_CONTACT_PREFIXES = ("direccion", "tel:", "link:")
+
+
+def _is_contact_line(text: str) -> bool:
+    plain = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().strip().lower()
+    return plain.startswith(_CONTACT_PREFIXES)
 
 CAREER_PATTERNS = {
     "civil": [r"civil", r"estructur", r"cimentac", r"obra\b", r"residente", r"topograf", r"vial"],
@@ -322,7 +331,7 @@ def _clamp_score(value) -> int:
 
 
 class CvService:
-    def adapt(self, body: AdaptCvRequest) -> AdaptCvResponse:
+    def adapt(self, body: AdaptCvRequest, client_ip: Optional[str] = None) -> AdaptCvResponse:
         profile = store.get_profile(body.student_id)
         if not profile:
             raise HTTPException(
@@ -341,20 +350,30 @@ class CvService:
             log.warning("Sin DEEPSEEK_API_KEY — usando adaptador local")
             return local
 
+        if not body.ai_consent:
+            return local
+
+        allowed, reason = ai_quota.try_acquire(client_ip)
+        if not allowed:
+            log.warning("Cuota DeepSeek agotada (ip=%s) — adaptador local", client_ip)
+            local.notes = f"{reason} {local.notes}".strip()
+            return local
+
         desc = (body.offer_description or "").strip()
         if len(desc) > 2500:
             desc = desc[:2500] + "…"
 
+        # Minimización (Ley 1581): a DeepSeek no van nombre, correo, teléfono, dirección ni enlaces.
+        education = [e for e in (profile.education or []) if not _is_contact_line(e)]
         user_payload = {
             "perfil": {
-                "nombre": profile.full_name,
                 "carrera": profile.program_slug,
                 "semestre": profile.semester,
                 "ciudad": profile.city,
                 "skills": (profile.skills or [])[:20],
                 "proyectos": (profile.projects or [])[:6],
                 "experiencia": (profile.experience or [])[:6],
-                "educacion": (profile.education or [])[:4],
+                "educacion": education[:4],
                 "idiomas": (profile.languages or [])[:6],
             },
             "oferta": {

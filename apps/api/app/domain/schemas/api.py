@@ -137,6 +137,13 @@ class AdaptCvRequest(BaseModel):
     offer_description: str
     offer_company: Optional[str] = None
     offer_requirements: Optional[str] = None
+    ai_consent: bool = Field(
+        default=False,
+        description=(
+            "Autorización expresa del estudiante (Ley 1581 de 2012) para enviar su HV "
+            "a DeepSeek. Sin ella el CV se genera solo con el adaptador local."
+        ),
+    )
 
 
 class AdaptCvResponse(BaseModel):
@@ -174,91 +181,6 @@ class AdaptCvResponse(BaseModel):
         description="Modelo usado cuando provider=deepseek",
         examples=["deepseek-v4-flash"],
     )
-
-
-class MarketSampleOffer(BaseModel):
-    title: str
-    company: str
-    source: str = ""
-    salary: Optional[str] = None
-    applicants: Optional[int] = None
-    url: Optional[str] = None
-
-
-class MarketSkillStat(BaseModel):
-    skill: str = Field(..., examples=["Python"])
-    count: int = Field(..., description="Vacantes del periodo que piden esta skill")
-    percent: int = Field(..., ge=0, le=100, description="% de vacantes que la mencionan")
-    previous_count: int = Field(default=0, description="Vacantes del periodo anterior")
-    trend: str = Field(
-        default="estable",
-        description="sube | baja | estable | nueva (vs periodo anterior)",
-    )
-    samples: List[MarketSampleOffer] = Field(
-        default_factory=list,
-        description="Ejemplos reales de vacantes que piden esta skill",
-    )
-
-
-class MarketTitleStat(BaseModel):
-    title: str
-    count: int
-    percent: int = 0
-
-
-class MarketCompetitionStat(BaseModel):
-    offers_with_applicants: int = 0
-    offers_total: int = 0
-    coverage_percent: int = 0
-    avg_applicants: Optional[float] = None
-    median_applicants: Optional[int] = None
-    max_applicants: Optional[int] = None
-    note: str = ""
-
-
-class MarketDistributionItem(BaseModel):
-    label: str
-    count: int
-    percent: int = Field(..., ge=0, le=100)
-
-
-class MarketStatsResponse(BaseModel):
-    """Demanda del mercado según ofertas archivadas (portales + empresas).
-
-    No mide postulaciones en portales externos de forma completa
-    (dato casi nunca público); mide QUÉ piden las vacantes.
-    """
-
-    days: int = Field(..., description="Ventana analizada (días)")
-    total_offers: int = Field(..., description="Vacantes analizadas en la ventana")
-    archive_total: int = Field(..., description="Vacantes acumuladas en el histórico")
-    top_skills: List[MarketSkillStat] = Field(default_factory=list)
-    low_demand_skills: List[MarketSkillStat] = Field(default_factory=list)
-    top_titles: List[MarketTitleStat] = Field(default_factory=list)
-    top_companies: List[MarketDistributionItem] = Field(default_factory=list)
-    by_modality: List[MarketDistributionItem] = Field(default_factory=list)
-    by_source: List[MarketDistributionItem] = Field(default_factory=list)
-    by_program: List[MarketDistributionItem] = Field(default_factory=list)
-    by_city: List[MarketDistributionItem] = Field(default_factory=list)
-    by_seniority: List[MarketDistributionItem] = Field(default_factory=list)
-    salary_bands: List[MarketDistributionItem] = Field(default_factory=list)
-    salary_disclosed_percent: int = Field(default=0, ge=0, le=100)
-    competition: MarketCompetitionStat = Field(default_factory=MarketCompetitionStat)
-    insight: str = Field(default="", description="Lectura en lenguaje claro para directivos")
-    applicants_disclaimer: str = ""
-
-
-class MarketHarvestResponse(BaseModel):
-    ok: bool = True
-    queries: int = 0
-    max_age_hours: int = 168
-    collected_raw: int = 0
-    unique: int = 0
-    newly_archived: int = 0
-    archive_total: int = 0
-    per_query: Dict[str, int] = Field(default_factory=dict)
-    errors: List[dict] = Field(default_factory=list)
-    note: str = ""
 
 
 class LoginRequest(BaseModel):

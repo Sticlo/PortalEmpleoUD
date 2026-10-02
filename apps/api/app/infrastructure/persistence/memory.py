@@ -21,6 +21,10 @@ def save_profile(student_id: str, profile: StudentProfile) -> StudentProfile:
     return profile
 
 
+def delete_profile(student_id: str) -> bool:
+    return _PROFILES.pop(student_id, None) is not None
+
+
 def list_offers() -> List[Offer]:
     return sorted(_OFFERS.values(), key=lambda o: o.published_at, reverse=True)
 

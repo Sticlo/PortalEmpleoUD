@@ -25,3 +25,13 @@ def upsert_profile(student_id: str, profile: StudentProfile):
 def get_profile(student_id: str):
     profile = _service.get_profile(student_id)
     return {"student_id": student_id, "profile": profile}
+
+
+@router.delete(
+    "/students/{student_id}/profile",
+    summary="Borrar HV del estudiante",
+    description="Derecho de supresión (Ley 1581 de 2012): elimina el perfil guardado en el servidor.",
+)
+def delete_profile(student_id: str):
+    deleted = _service.delete_profile(student_id)
+    return {"student_id": student_id, "deleted": deleted}

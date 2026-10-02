@@ -132,11 +132,16 @@ export class HvApiService {
     );
   }
 
+  deleteProfile(studentId: string): Observable<unknown> {
+    return this.http.delete(`${this.base}/students/${encodeURIComponent(studentId)}/profile`);
+  }
+
   adaptCv(payload: {
     student_id: string;
     offer_title: string;
     offer_description: string;
     offer_company?: string;
+    ai_consent: boolean;
   }): Observable<AdaptCvResponse> {
     return this.http.post<AdaptCvResponse>(`${this.base}/cv/adapt`, payload);
   }

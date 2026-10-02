@@ -54,6 +54,9 @@ class Settings:
     deepseek_model: str
     deepseek_base_url: str
     cv_generations_per_student_month: int
+    deepseek_daily_limit: int
+    deepseek_daily_limit_per_ip: int
+    scraper_proxy_url: str
     database_url: str
 
 
@@ -76,5 +79,8 @@ def get_settings() -> Settings:
         cv_generations_per_student_month=_env_int(
             "CV_GENERATIONS_PER_STUDENT_MONTH", 10
         ),
+        deepseek_daily_limit=_env_int("DEEPSEEK_DAILY_LIMIT", 200),
+        deepseek_daily_limit_per_ip=_env_int("DEEPSEEK_DAILY_LIMIT_PER_IP", 5),
+        scraper_proxy_url=_env("SCRAPER_PROXY_URL", "").strip(),
         database_url=_env("DATABASE_URL", "sqlite:///./data/bolsa_empleo.db"),
     )

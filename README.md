@@ -144,8 +144,7 @@ CORE (config, openapi) — transversal, sin lógica de negocio
 | `students_controller` | `/api/v1/students` | Perfil HV servidor |
 | `offers_controller` | `/api/v1/offers` | Listado, CRUD, search indexado, today, empresa |
 | `scraping_controller` | `/api/v1/scraping` | `run` + estado de cola |
-| `cv_controller` | `/api/v1/cv` | Adaptar HV a oferta |
-| `stats_controller` | `/api/v1/stats` | Métricas mercado + refresh harvest |
+| `cv_controller` | `/api/v1/cv` | Adaptar HV a oferta (requiere `ai_consent` para usar DeepSeek) + cuota diaria |
 | `auth_controller` | `/api/v1/auth` | Placeholder login (sin JWT real) |
 
 Health: `GET /health` (fuera del prefijo de negocio).
@@ -162,8 +161,7 @@ Docs: `/docs` · `/redoc` · `/openapi.json`.
 | `offer_service` | CRUD ofertas, publicación empresa |
 | `student_service` | Perfil estudiante |
 | `cv_service` | Adaptación HV (DeepSeek + reglas no inventar / mismatch carrera) |
-| `market_stats_service` | Agrega skills, portales, modalidades desde archive |
-| `market_harvest_service` | Cosecha ofertas para enriquecer métricas (usa misma cola de portales) |
+| `ai_quota_service` | Tope diario global y por IP de llamadas a DeepSeek |
 
 ### 4.3 Domain
 
@@ -220,7 +218,7 @@ apps/web/src/app/
 │   ├── ofertas/             # Radar + Empleos de hoy + cards
 │   ├── cv/                  # Preparar CV para una oferta
 │   ├── empresa/             # Publicar vacante
-│   └── admin/               # Métricas mercado (Chart.js)
+│   └── privacidad/          # Aviso Ley 1581 + borrar datos
 └── shared/components/       # Topbar, header, nav, toast, footer
 ```
 
@@ -233,7 +231,7 @@ apps/web/src/app/
 | `/ofertas` | Radar + Empleos de hoy |
 | `/cv/:offerId` | Adaptar / ver CV vs oferta |
 | `/empresa` | Publicar oferta |
-| `/admin/mercado` | Métricas (piloto **sin auth**) |
+| `/privacidad` | Aviso de privacidad (Ley 1581), revocar IA, borrar datos |
 
 Lazy-load por `loadChildren` en `app.routes.ts`.
 
@@ -395,7 +393,7 @@ Internet → nginx (TLS) → web SSR (:4000/4200)
                        → worker scrape/harvest
 ```
 
-Carpetas `infra/docker/` e `infra/nginx/` existen como stubs: hay que llenarlas antes de cobrar “producción”.
+Despliegue gratuito actual: `docker-compose.yml` (Caddy + API + web) en Oracle Cloud Always Free — ver [`docs/deploy/oracle-cloud.md`](docs/deploy/oracle-cloud.md).
 
 Arranque local actual (dev):
 

@@ -4,8 +4,8 @@ import { Component } from '@angular/core';
   selector: 'app-topbar',
   template: `
     <div class="topbar">
-      <span class="gov">GOV.CO</span>
-      <span class="topbar-right">Piloto de empleabilidad · Facultad de Ingeniería</span>
+      <span class="gov">RUTAUD</span>
+      <span class="topbar-right">Proyecto estudiantil independiente · Gratis para estudiantes UD</span>
     </div>
   `,
 })
