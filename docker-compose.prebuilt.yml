@@ -1,0 +1,7 @@
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up -d --build
+# Requiere apps/web/dist/web ya compilado (lo sube scripts/deploy.ps1).
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.prebuilt

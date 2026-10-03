@@ -1,0 +1,9 @@
+# Imagen para servidores pequeños (p. ej. e2-micro de 1 GB): Angular se compila fuera
+# (`npm run build`) y aquí solo se copia dist/web. Ver docker-compose.prebuilt.yml.
+FROM node:24-slim
+WORKDIR /app
+ENV NODE_ENV=production \
+    PORT=4000
+COPY dist/web ./dist/web
+EXPOSE 4000
+CMD ["node", "dist/web/server/server.mjs"]
